@@ -206,19 +206,56 @@
     z-index: 0;
   }
 
-  /* Ambient Background Glow */
-  .ambient-glow {
+  /* Animated Aurora Background */
+  .aurora-animated {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 100vh;
-    background: 
-      radial-gradient(ellipse at 50% 0%, rgba(57, 224, 120, 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 20% 50%, rgba(20, 80, 50, 0.04) 0%, transparent 40%),
-      radial-gradient(ellipse at 80% 60%, rgba(30, 100, 60, 0.03) 0%, transparent 40%);
+    bottom: 0;
     pointer-events: none;
     z-index: 0;
+    overflow: hidden;
+  }
+
+  .aurora-animated::before,
+  .aurora-animated::after {
+    content: '';
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    top: -25%;
+    left: -25%;
+    animation: aurora-drift 20s ease-in-out infinite;
+  }
+
+  .aurora-animated::before {
+    background: 
+      radial-gradient(ellipse 80% 50% at 30% 20%, rgba(57, 224, 120, 0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 70% 80%, rgba(20, 180, 90, 0.08) 0%, transparent 50%);
+    animation-delay: 0s;
+  }
+
+  .aurora-animated::after {
+    background: 
+      radial-gradient(ellipse 70% 60% at 60% 30%, rgba(30, 200, 100, 0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 50% at 20% 70%, rgba(57, 224, 120, 0.05) 0%, transparent 45%);
+    animation-delay: -10s;
+  }
+
+  @keyframes aurora-drift {
+    0%, 100% {
+      transform: translate(0%, 0%) rotate(0deg) scale(1);
+    }
+    25% {
+      transform: translate(5%, -5%) rotate(2deg) scale(1.05);
+    }
+    50% {
+      transform: translate(-3%, 5%) rotate(-1deg) scale(0.98);
+    }
+    75% {
+      transform: translate(-5%, -3%) rotate(1deg) scale(1.02);
+    }
   }
 
   /* Form Label */
@@ -229,5 +266,19 @@
 
   .form-label-required {
     @apply text-aurora-glow ml-1;
+  }
+
+  /* Glass Card for Privacy Page */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 1.5rem;
+  }
+
+  /* Aurora Green Link */
+  .text-aurora-glow {
+    color: #3ce079;
   }
 }
