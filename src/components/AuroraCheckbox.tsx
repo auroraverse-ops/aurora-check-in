@@ -1,10 +1,11 @@
 import { Check } from "lucide-react";
+import { ReactNode } from "react";
 
 interface AuroraCheckboxProps {
   id: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
-  label: string;
+  label: ReactNode;
   required?: boolean;
 }
 

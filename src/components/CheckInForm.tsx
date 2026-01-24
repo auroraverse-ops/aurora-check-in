@@ -197,14 +197,28 @@ const CheckInForm = ({ webhookUrl }: CheckInFormProps) => {
           id="datenschutz"
           checked={formData.datenschutz}
           onChange={(checked) => handleInputChange("datenschutz", checked)}
-          label="Ich akzeptiere die Datenschutzbestimmungen und die Verarbeitung meiner Daten."
+          label={
+            <>
+              Ich habe die{" "}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-aurora-glow underline hover:text-white transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Datenschutzbestimmungen
+              </a>{" "}
+              zur Kenntnis genommen und willige in die Verarbeitung meiner Angaben ein.
+            </>
+          }
           required
         />
         <AuroraCheckbox
           id="erinnerung"
           checked={formData.erinnerung}
           onChange={(checked) => handleInputChange("erinnerung", checked)}
-          label="Ich möchte den Erinnerungsservice für meinen nächsten Augencheck per SMS/WhatsApp erhalten."
+          label="Ja, erinnert mich bitte zukünftig kostenlos an meinen nächsten Sehtest (via SMS/E-Mail), damit meine Sehkraft optimal bleibt."
         />
       </div>
 
