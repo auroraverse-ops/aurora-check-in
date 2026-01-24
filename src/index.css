@@ -1,96 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* AURORA Design System - Dark Mode Only */
+    --background: 192 79% 3%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 192 60% 6%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 192 60% 6%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Aurora Green - Neon Accent */
+    --primary: 145 76% 55%;
+    --primary-foreground: 192 79% 3%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 192 40% 12%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 192 30% 15%;
+    --muted-foreground: 192 10% 60%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 145 76% 55%;
+    --accent-foreground: 192 79% 3%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 192 30% 20%;
+    --input: 192 40% 10%;
+    --ring: 145 76% 55%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Custom Aurora Colors */
+    --aurora-dark: 192 79% 3%;
+    --aurora-glow: 145 76% 55%;
+    --aurora-glow-soft: 145 76% 45%;
+    --aurora-glass: 192 50% 8%;
+    --aurora-glass-border: 0 0% 100%;
+    --aurora-text-muted: 192 10% 55%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 192 79% 3%;
+    --foreground: 0 0% 100%;
+    --card: 192 60% 6%;
+    --card-foreground: 0 0% 100%;
+    --popover: 192 60% 6%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 145 76% 55%;
+    --primary-foreground: 192 79% 3%;
+    --secondary: 192 40% 12%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 192 30% 15%;
+    --muted-foreground: 192 10% 60%;
+    --accent: 145 76% 55%;
+    --accent-foreground: 192 79% 3%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 192 30% 20%;
+    --input: 192 40% 10%;
+    --ring: 145 76% 55%;
   }
 }
 
@@ -99,7 +75,102 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: 'Outfit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
+    background-color: #020B0F;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Input */
+  .glass-input {
+    @apply w-full px-4 py-3.5 rounded-xl text-foreground placeholder:text-muted-foreground;
+    background: hsla(192, 40%, 10%, 0.6);
+    border: 1px solid hsla(0, 0%, 100%, 0.1);
+    backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+  }
+
+  .glass-input:focus {
+    outline: none;
+    border-color: hsl(var(--aurora-glow));
+    box-shadow: 0 0 20px hsla(145, 76%, 55%, 0.3), 0 0 40px hsla(145, 76%, 55%, 0.1);
+  }
+
+  /* Aurora Card Selection */
+  .aurora-card {
+    @apply relative flex flex-col items-center justify-center p-4 rounded-2xl cursor-pointer transition-all duration-300;
+    background: hsla(192, 40%, 10%, 0.5);
+    border: 1px solid hsla(0, 0%, 100%, 0.1);
+    backdrop-filter: blur(12px);
+    min-height: 100px;
+  }
+
+  .aurora-card:hover {
+    border-color: hsla(145, 76%, 55%, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .aurora-card.active {
+    border-color: hsl(var(--aurora-glow));
+    background: hsla(145, 76%, 55%, 0.1);
+    box-shadow: 0 0 30px hsla(145, 76%, 55%, 0.3), inset 0 0 20px hsla(145, 76%, 55%, 0.1);
+  }
+
+  /* Aurora Button */
+  .aurora-button {
+    @apply w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300;
+    background: hsl(var(--aurora-glow));
+    color: #020B0F;
+    box-shadow: 0 4px 20px hsla(145, 76%, 55%, 0.4);
+  }
+
+  .aurora-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px hsla(145, 76%, 55%, 0.5);
+  }
+
+  .aurora-button:active {
+    transform: translateY(0);
+  }
+
+  .aurora-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Aurora Checkbox */
+  .aurora-checkbox {
+    @apply w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer flex-shrink-0;
+    border-color: hsla(0, 0%, 100%, 0.3);
+    background: transparent;
+  }
+
+  .aurora-checkbox.checked {
+    background: hsl(var(--aurora-glow));
+    border-color: hsl(var(--aurora-glow));
+    box-shadow: 0 0 10px hsla(145, 76%, 55%, 0.5);
+  }
+
+  /* Aurora Glow Background Effect */
+  .aurora-glow-bg {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
+    height: 400px;
+    background: radial-gradient(ellipse at center top, hsla(145, 76%, 55%, 0.15) 0%, hsla(145, 76%, 45%, 0.08) 30%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
   }
 }
