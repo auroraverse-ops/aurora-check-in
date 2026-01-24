@@ -7,8 +7,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Aurora Background */}
-      <div className="aurora-animated" />
+      {/* Award-Winning Aurora Background */}
+      <div className="aurora-animated">
+        <div className="aurora-blob-1" />
+        <div className="aurora-blob-2" />
+        <div className="aurora-noise" />
+        <div className="aurora-vignette" />
+      </div>
       
       <div className="relative z-10 container max-w-md mx-auto px-6 py-10 pb-16">
         {/* Header with Logo Glow */}
@@ -22,7 +27,8 @@ const Index = () => {
               alt="Augen Kompetenz Zentrum Logo" 
               className="w-56 h-auto object-contain"
               style={{
-                filter: 'drop-shadow(0 0 40px rgba(57, 224, 120, 0.15))'
+                mixBlendMode: 'screen',
+                filter: 'drop-shadow(0 0 30px rgba(57, 224, 120, 0.2))'
               }}
             />
           </div>
