@@ -23,13 +23,13 @@ const SehhilfeCard = ({ type, label, active, onClick }: SehhilfeCardProps) => {
       className={`aurora-card flex-1 ${active ? 'active' : ''}`}
     >
       <Icon 
-        className={`w-7 h-7 mb-2 transition-colors duration-300 ${
-          active ? 'text-aurora-glow' : 'text-muted-foreground'
+        className={`w-8 h-8 mb-3 transition-all duration-300 ${
+          active ? 'text-aurora-glow drop-shadow-[0_0_12px_rgba(57,224,120,0.6)]' : 'text-white/40'
         }`} 
         strokeWidth={1.5}
       />
-      <span className={`text-sm font-medium transition-colors duration-300 ${
-        active ? 'text-foreground' : 'text-muted-foreground'
+      <span className={`text-sm font-medium tracking-wide transition-all duration-300 ${
+        active ? 'text-white' : 'text-white/50'
       }`}>
         {label}
       </span>

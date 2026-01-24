@@ -112,9 +112,9 @@ const CheckInForm = ({ webhookUrl }: CheckInFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {/* Name Fields */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-5">
         <GlassInput
           id="vorname"
           label="Vorname"
@@ -165,11 +165,11 @@ const CheckInForm = ({ webhookUrl }: CheckInFormProps) => {
       />
 
       {/* Sehhilfe Selection */}
-      <div className="space-y-3">
-        <label className="block text-sm font-medium text-muted-foreground">
-          Sehhilfe <span className="text-aurora-glow">*</span>
+      <div className="space-y-4 pt-2">
+        <label className="form-label">
+          Sehhilfe <span className="form-label-required">*</span>
         </label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-4">
           <SehhilfeCard
             type="brille"
             label="Brille"
@@ -192,7 +192,7 @@ const CheckInForm = ({ webhookUrl }: CheckInFormProps) => {
       </div>
 
       {/* Checkboxes */}
-      <div className="space-y-4 pt-2">
+      <div className="space-y-5 pt-4">
         <AuroraCheckbox
           id="datenschutz"
           checked={formData.datenschutz}
@@ -209,13 +209,15 @@ const CheckInForm = ({ webhookUrl }: CheckInFormProps) => {
       </div>
 
       {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="aurora-button mt-8"
-      >
-        {isLoading ? "WIRD VERARBEITET..." : "JETZT EINCHECKEN"}
-      </button>
+      <div className="pt-6">
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="aurora-button"
+        >
+          {isLoading ? "WIRD VERARBEITET..." : "JETZT EINCHECKEN"}
+        </button>
+      </div>
     </form>
   );
 };

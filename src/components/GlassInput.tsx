@@ -7,10 +7,10 @@ interface GlassInputProps extends InputHTMLAttributes<HTMLInputElement> {
 const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
   ({ label, id, className = "", ...props }, ref) => {
     return (
-      <div className="space-y-2">
-        <label htmlFor={id} className="block text-sm font-medium text-muted-foreground">
+      <div className="space-y-3">
+        <label htmlFor={id} className="form-label">
           {label}
-          {props.required && <span className="text-aurora-glow ml-1">*</span>}
+          {props.required && <span className="form-label-required">*</span>}
         </label>
         <input
           ref={ref}

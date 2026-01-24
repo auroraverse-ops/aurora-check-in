@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* AURORA Design System - Dark Mode Only */
+    /* AURORA Design System - Premium Medical Dark Mode */
     --background: 192 79% 3%;
     --foreground: 0 0% 100%;
 
@@ -24,7 +24,7 @@
     --secondary-foreground: 0 0% 100%;
 
     --muted: 192 30% 15%;
-    --muted-foreground: 192 10% 60%;
+    --muted-foreground: 200 10% 65%;
 
     --accent: 145 76% 55%;
     --accent-foreground: 192 79% 3%;
@@ -32,19 +32,20 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 192 30% 20%;
+    --border: 0 0% 100%;
     --input: 192 40% 10%;
     --ring: 145 76% 55%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     /* Custom Aurora Colors */
     --aurora-dark: 192 79% 3%;
     --aurora-glow: 145 76% 55%;
-    --aurora-glow-soft: 145 76% 45%;
+    --aurora-glow-soft: 145 60% 40%;
     --aurora-glass: 192 50% 8%;
     --aurora-glass-border: 0 0% 100%;
-    --aurora-text-muted: 192 10% 55%;
+    --aurora-text-muted: 200 15% 70%;
+    --aurora-text-subtle: 200 10% 50%;
   }
 
   .dark {
@@ -59,12 +60,12 @@
     --secondary: 192 40% 12%;
     --secondary-foreground: 0 0% 100%;
     --muted: 192 30% 15%;
-    --muted-foreground: 192 10% 60%;
+    --muted-foreground: 200 10% 65%;
     --accent: 145 76% 55%;
     --accent-foreground: 192 79% 3%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 192 30% 20%;
+    --border: 0 0% 100%;
     --input: 192 40% 10%;
     --ring: 145 76% 55%;
   }
@@ -89,56 +90,77 @@
 }
 
 @layer components {
-  /* Glassmorphism Input */
+  /* Premium Glassmorphism Input */
   .glass-input {
-    @apply w-full px-4 py-3.5 rounded-xl text-foreground placeholder:text-muted-foreground;
-    background: hsla(192, 40%, 10%, 0.6);
-    border: 1px solid hsla(0, 0%, 100%, 0.1);
-    backdrop-filter: blur(12px);
-    transition: all 0.3s ease;
+    @apply w-full px-5 py-4 rounded-2xl text-white placeholder:text-white/40 text-base;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-input:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .glass-input:focus {
     outline: none;
-    border-color: hsl(var(--aurora-glow));
-    box-shadow: 0 0 20px hsla(145, 76%, 55%, 0.3), 0 0 40px hsla(145, 76%, 55%, 0.1);
+    border-color: #39E078;
+    background: rgba(57, 224, 120, 0.03);
+    box-shadow: 
+      0 0 0 1px rgba(57, 224, 120, 0.3),
+      0 0 30px rgba(57, 224, 120, 0.15),
+      0 0 60px rgba(57, 224, 120, 0.05);
   }
 
-  /* Aurora Card Selection */
+  /* Aurora Card Selection - Premium Glass */
   .aurora-card {
-    @apply relative flex flex-col items-center justify-center p-4 rounded-2xl cursor-pointer transition-all duration-300;
-    background: hsla(192, 40%, 10%, 0.5);
-    border: 1px solid hsla(0, 0%, 100%, 0.1);
-    backdrop-filter: blur(12px);
-    min-height: 100px;
+    @apply relative flex flex-col items-center justify-center p-5 rounded-2xl cursor-pointer;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    min-height: 110px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .aurora-card:hover {
-    border-color: hsla(145, 76%, 55%, 0.4);
-    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-3px);
   }
 
   .aurora-card.active {
-    border-color: hsl(var(--aurora-glow));
-    background: hsla(145, 76%, 55%, 0.1);
-    box-shadow: 0 0 30px hsla(145, 76%, 55%, 0.3), inset 0 0 20px hsla(145, 76%, 55%, 0.1);
+    border-color: #39E078;
+    background: rgba(57, 224, 120, 0.08);
+    box-shadow: 
+      0 0 0 1px rgba(57, 224, 120, 0.4),
+      0 0 40px rgba(57, 224, 120, 0.2),
+      inset 0 0 30px rgba(57, 224, 120, 0.05);
   }
 
-  /* Aurora Button */
+  /* Aurora Button - Premium */
   .aurora-button {
-    @apply w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300;
-    background: hsl(var(--aurora-glow));
+    @apply w-full py-5 px-8 rounded-2xl font-bold text-lg tracking-wide transition-all duration-300;
+    background: linear-gradient(135deg, #39E078 0%, #2BC462 100%);
     color: #020B0F;
-    box-shadow: 0 4px 20px hsla(145, 76%, 55%, 0.4);
+    box-shadow: 
+      0 4px 30px rgba(57, 224, 120, 0.4),
+      0 0 60px rgba(57, 224, 120, 0.2);
+    letter-spacing: 0.05em;
   }
 
   .aurora-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 30px hsla(145, 76%, 55%, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 
+      0 8px 40px rgba(57, 224, 120, 0.5),
+      0 0 80px rgba(57, 224, 120, 0.3);
   }
 
   .aurora-button:active {
-    transform: translateY(0);
+    transform: translateY(-1px);
   }
 
   .aurora-button:disabled {
@@ -147,30 +169,65 @@
     transform: none;
   }
 
-  /* Aurora Checkbox */
+  /* Aurora Checkbox - Premium */
   .aurora-checkbox {
-    @apply w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer flex-shrink-0;
-    border-color: hsla(0, 0%, 100%, 0.3);
-    background: transparent;
+    @apply w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300 cursor-pointer flex-shrink-0;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(8px);
+  }
+
+  .aurora-checkbox:hover {
+    border-color: rgba(255, 255, 255, 0.4);
   }
 
   .aurora-checkbox.checked {
-    background: hsl(var(--aurora-glow));
-    border-color: hsl(var(--aurora-glow));
-    box-shadow: 0 0 10px hsla(145, 76%, 55%, 0.5);
+    background: #39E078;
+    border-color: #39E078;
+    box-shadow: 0 0 20px rgba(57, 224, 120, 0.5);
   }
 
-  /* Aurora Glow Background Effect */
-  .aurora-glow-bg {
-    position: fixed;
-    top: 0;
+  /* Logo Glow Background */
+  .logo-glow {
+    position: absolute;
+    top: -100px;
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
-    max-width: 600px;
-    height: 400px;
-    background: radial-gradient(ellipse at center top, hsla(145, 76%, 55%, 0.15) 0%, hsla(145, 76%, 45%, 0.08) 30%, transparent 70%);
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(57, 224, 120, 0.12) 0%,
+      rgba(39, 180, 90, 0.08) 20%,
+      rgba(20, 100, 60, 0.04) 40%,
+      rgba(2, 11, 15, 0) 70%
+    );
     pointer-events: none;
     z-index: 0;
+  }
+
+  /* Ambient Background Glow */
+  .ambient-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background: 
+      radial-gradient(ellipse at 50% 0%, rgba(57, 224, 120, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 50%, rgba(20, 80, 50, 0.04) 0%, transparent 40%),
+      radial-gradient(ellipse at 80% 60%, rgba(30, 100, 60, 0.03) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Form Label */
+  .form-label {
+    @apply block text-sm font-medium mb-3 tracking-wide;
+    color: hsl(var(--aurora-text-muted));
+  }
+
+  .form-label-required {
+    @apply text-aurora-glow ml-1;
   }
 }
