@@ -1,81 +1,72 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import akzLogo from "@/assets/akz-logo.png";
 import CheckInForm from "@/components/CheckInForm";
 
 const Index = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const directionRef = useRef<1 | -1>(1); // 1 = forward, -1 = backward
-  const animationRef = useRef<number | null>(null);
+  const [videoOpacity, setVideoOpacity] = useState(1);
+  const fadeCheckRef = useRef<number | null>(null);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Set playback speed to 70%
-    video.playbackRate = 0.7;
+    // Set playback speed to 80%
+    video.playbackRate = 0.8;
 
-    // Ping-Pong loop implementation
-    const handlePingPong = () => {
+    // Fade-loop implementation: fade out near end, reset, fade in
+    const checkForFade = () => {
       if (!video) return;
 
-      if (directionRef.current === 1) {
-        // Forward playback - let video play naturally
-        if (video.currentTime >= video.duration - 0.05) {
-          // Reached end, switch to reverse
-          directionRef.current = -1;
-          video.pause();
-        }
+      const timeRemaining = video.duration - video.currentTime;
+      
+      // Start fade 0.5 seconds before end
+      if (timeRemaining <= 0.5 && timeRemaining > 0) {
+        setVideoOpacity(0);
       }
 
-      if (directionRef.current === -1) {
-        // Reverse playback - manually decrement currentTime
-        video.currentTime = Math.max(0, video.currentTime - 0.016 * 0.7); // ~60fps adjusted for speed
-        
-        if (video.currentTime <= 0.05) {
-          // Reached beginning, switch to forward
-          directionRef.current = 1;
-          video.play();
-        }
-      }
-
-      animationRef.current = requestAnimationFrame(handlePingPong);
+      fadeCheckRef.current = requestAnimationFrame(checkForFade);
     };
 
-    // Start the ping-pong loop
-    video.addEventListener('play', () => {
-      if (!animationRef.current) {
-        animationRef.current = requestAnimationFrame(handlePingPong);
-      }
-    });
+    // Handle video end: reset to beginning and fade back in
+    const handleEnded = () => {
+      video.currentTime = 0;
+      video.play();
+      // Small delay to ensure smooth transition
+      setTimeout(() => {
+        setVideoOpacity(1);
+      }, 50);
+    };
 
-    // Prevent default loop behavior - we handle it manually
+    video.addEventListener('ended', handleEnded);
+    
+    // Disable native loop - we handle it manually
     video.loop = false;
 
-    // Handle video end to start reverse
-    video.addEventListener('ended', () => {
-      directionRef.current = -1;
-      video.pause();
-    });
-
-    // Start animation frame loop
-    animationRef.current = requestAnimationFrame(handlePingPong);
+    // Start fade check loop
+    fadeCheckRef.current = requestAnimationFrame(checkForFade);
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+      video.removeEventListener('ended', handleEnded);
+      if (fadeCheckRef.current) {
+        cancelAnimationFrame(fadeCheckRef.current);
       }
     };
   }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-black">
-      {/* High-End Aurora Video Background */}
+      {/* High-End Aurora Video Background with Fade Loop */}
       <video
         ref={videoRef}
         autoPlay
         muted
         playsInline
         className="fixed inset-0 w-screen h-screen object-cover z-0"
+        style={{
+          opacity: videoOpacity,
+          transition: 'opacity 0.5s ease-out'
+        }}
         poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000'/%3E%3C/svg%3E"
       >
         <source src="/aurora.mp4" type="video/mp4" />
