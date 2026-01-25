@@ -70,18 +70,10 @@ const CheckInForm = () => {
         source: "aurora-checkin",
       };
 
-      // Get Basic Auth credentials from environment variables
-      const user = import.meta.env.VITE_WEBHOOK_USER || "";
-      const pass = import.meta.env.VITE_WEBHOOK_PASS || "";
-      
       const headers: HeadersInit = {
         "Content-Type": "application/json",
+        "Authorization": "Basic " + btoa("akz-gruppe:check-in"),
       };
-
-      // Add Basic Auth header if credentials are available
-      if (user && pass) {
-        headers["Authorization"] = "Basic " + btoa(user + ":" + pass);
-      }
 
       await fetch(WEBHOOK_URL, {
         method: "POST",

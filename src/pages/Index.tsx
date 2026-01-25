@@ -1,72 +1,16 @@
-import { useRef, useEffect, useState } from "react";
 import akzLogo from "@/assets/akz-logo.png";
 import CheckInForm from "@/components/CheckInForm";
 
 const Index = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoOpacity, setVideoOpacity] = useState(1);
-  const fadeCheckRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Set playback speed to 80%
-    video.playbackRate = 0.8;
-
-    // Fade-loop implementation: fade out near end, reset, fade in
-    const checkForFade = () => {
-      if (!video) return;
-
-      const timeRemaining = video.duration - video.currentTime;
-      
-      // Start fade 0.5 seconds before end
-      if (timeRemaining <= 0.5 && timeRemaining > 0) {
-        setVideoOpacity(0);
-      }
-
-      fadeCheckRef.current = requestAnimationFrame(checkForFade);
-    };
-
-    // Handle video end: reset to beginning and fade back in
-    const handleEnded = () => {
-      video.currentTime = 0;
-      video.play();
-      // Small delay to ensure smooth transition
-      setTimeout(() => {
-        setVideoOpacity(1);
-      }, 50);
-    };
-
-    video.addEventListener('ended', handleEnded);
-    
-    // Disable native loop - we handle it manually
-    video.loop = false;
-
-    // Start fade check loop
-    fadeCheckRef.current = requestAnimationFrame(checkForFade);
-
-    return () => {
-      video.removeEventListener('ended', handleEnded);
-      if (fadeCheckRef.current) {
-        cancelAnimationFrame(fadeCheckRef.current);
-      }
-    };
-  }, []);
-
   return (
     <div className="min-h-screen relative overflow-hidden bg-black">
-      {/* High-End Aurora Video Background with Fade Loop */}
+      {/* High-End Aurora Video Background - Standard HTML5 Loop */}
       <video
-        ref={videoRef}
         autoPlay
+        loop
         muted
         playsInline
         className="fixed inset-0 w-screen h-screen object-cover z-0"
-        style={{
-          opacity: videoOpacity,
-          transition: 'opacity 0.5s ease-out'
-        }}
         poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000'/%3E%3C/svg%3E"
       >
         <source src="/aurora.mp4" type="video/mp4" />
