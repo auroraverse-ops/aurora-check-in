@@ -20,11 +20,9 @@ const checkInSchema = z.object({
 
 type CheckInData = z.infer<typeof checkInSchema>;
 
-interface CheckInFormProps {
-  webhookUrl?: string;
-}
+const WEBHOOK_URL = "https://neightn.akz-gruppe.de/webhook/Check-in";
 
-const CheckInForm = ({ webhookUrl }: CheckInFormProps) => {
+const CheckInForm = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
@@ -72,16 +70,25 @@ const CheckInForm = ({ webhookUrl }: CheckInFormProps) => {
         source: "aurora-checkin",
       };
 
-      if (webhookUrl) {
-        await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          mode: "no-cors",
-          body: JSON.stringify(payload),
-        });
+      // Get Basic Auth credentials from environment variables
+      const user = import.meta.env.VITE_WEBHOOK_USER || "";
+      const pass = import.meta.env.VITE_WEBHOOK_PASS || "";
+      
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      // Add Basic Auth header if credentials are available
+      if (user && pass) {
+        headers["Authorization"] = "Basic " + btoa(user + ":" + pass);
       }
 
-      console.log("Check-in data:", payload);
+      await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers,
+        mode: "no-cors",
+        body: JSON.stringify(payload),
+      });
 
       toast({
         title: "Erfolgreich eingecheckt!",

@@ -5,7 +5,10 @@ interface GlassInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
-  ({ label, id, className = "", ...props }, ref) => {
+  ({ label, id, className = "", type, ...props }, ref) => {
+    // Add color-scheme: dark for date inputs on mobile
+    const inputStyle = type === "date" ? { colorScheme: "dark" as const } : undefined;
+
     return (
       <div className="space-y-3">
         <label htmlFor={id} className="form-label">
@@ -15,7 +18,9 @@ const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
         <input
           ref={ref}
           id={id}
+          type={type}
           className={`glass-input ${className}`}
+          style={inputStyle}
           {...props}
         />
       </div>
