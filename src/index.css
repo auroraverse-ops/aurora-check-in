@@ -100,6 +100,20 @@
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* iOS Date Input Fix */
+  .glass-input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 55px;
+    color-scheme: dark;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 16px;
+    width: 100%;
+    line-height: 31px;
+  }
+
   .glass-input:hover {
     border-color: rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.05);
