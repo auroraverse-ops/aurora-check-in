@@ -6,16 +6,26 @@ const Index = () => {
   const webhookUrl = "";
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Award-Winning Aurora Background */}
-      <div className="aurora-animated">
-        <div className="aurora-blob-1" />
-        <div className="aurora-blob-2" />
-        <div className="aurora-noise" />
-        <div className="aurora-vignette" />
-      </div>
+    <div className="min-h-screen relative overflow-hidden bg-black">
+      {/* High-End Aurora Video Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed inset-0 w-screen h-screen object-cover z-0"
+        poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000'/%3E%3C/svg%3E"
+      >
+        <source 
+          src="https://cdn.pixabay.com/video/2024/06/29/218646_large.mp4" 
+          type="video/mp4" 
+        />
+      </video>
       
-      <div className="relative z-10 container max-w-md mx-auto px-6 py-10 pb-16">
+      {/* Dark Overlay for Readability */}
+      <div className="fixed inset-0 bg-black/40 z-[1]" />
+      
+      <div className="relative z-10 container max-w-md mx-auto px-6 py-10 pb-16 min-h-screen">
         {/* Header with Logo Glow */}
         <header className="text-center mb-16 relative">
           {/* Logo Glow Effect */}
