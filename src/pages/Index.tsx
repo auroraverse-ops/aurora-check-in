@@ -16,10 +16,7 @@ const Index = () => {
         className="fixed inset-0 w-screen h-screen object-cover z-0"
         poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000'/%3E%3C/svg%3E"
       >
-        <source 
-          src="https://cdn.pixabay.com/video/2024/06/29/218646_large.mp4" 
-          type="video/mp4" 
-        />
+        <source src="/aurora.mp4" type="video/mp4" />
       </video>
       
       {/* Dark Overlay for Readability */}
