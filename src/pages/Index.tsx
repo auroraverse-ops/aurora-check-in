@@ -1,16 +1,78 @@
+import { useRef, useEffect } from "react";
 import akzLogo from "@/assets/akz-logo.png";
 import CheckInForm from "@/components/CheckInForm";
 
 const Index = () => {
-  // Optional: Set your webhook URL here
-  const webhookUrl = "";
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const directionRef = useRef<1 | -1>(1); // 1 = forward, -1 = backward
+  const animationRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Set playback speed to 70%
+    video.playbackRate = 0.7;
+
+    // Ping-Pong loop implementation
+    const handlePingPong = () => {
+      if (!video) return;
+
+      if (directionRef.current === 1) {
+        // Forward playback - let video play naturally
+        if (video.currentTime >= video.duration - 0.05) {
+          // Reached end, switch to reverse
+          directionRef.current = -1;
+          video.pause();
+        }
+      }
+
+      if (directionRef.current === -1) {
+        // Reverse playback - manually decrement currentTime
+        video.currentTime = Math.max(0, video.currentTime - 0.016 * 0.7); // ~60fps adjusted for speed
+        
+        if (video.currentTime <= 0.05) {
+          // Reached beginning, switch to forward
+          directionRef.current = 1;
+          video.play();
+        }
+      }
+
+      animationRef.current = requestAnimationFrame(handlePingPong);
+    };
+
+    // Start the ping-pong loop
+    video.addEventListener('play', () => {
+      if (!animationRef.current) {
+        animationRef.current = requestAnimationFrame(handlePingPong);
+      }
+    });
+
+    // Prevent default loop behavior - we handle it manually
+    video.loop = false;
+
+    // Handle video end to start reverse
+    video.addEventListener('ended', () => {
+      directionRef.current = -1;
+      video.pause();
+    });
+
+    // Start animation frame loop
+    animationRef.current = requestAnimationFrame(handlePingPong);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-black">
       {/* High-End Aurora Video Background */}
       <video
+        ref={videoRef}
         autoPlay
-        loop
         muted
         playsInline
         className="fixed inset-0 w-screen h-screen object-cover z-0"
@@ -58,7 +120,7 @@ const Index = () => {
         </section>
 
         {/* Form */}
-        <CheckInForm webhookUrl={webhookUrl} />
+        <CheckInForm />
         
         {/* Footer Spacer */}
         <div className="h-12" />
