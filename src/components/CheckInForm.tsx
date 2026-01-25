@@ -78,7 +78,6 @@ const CheckInForm = () => {
       await fetch(WEBHOOK_URL, {
         method: "POST",
         headers,
-        mode: "no-cors",
         body: JSON.stringify(payload),
       });
 

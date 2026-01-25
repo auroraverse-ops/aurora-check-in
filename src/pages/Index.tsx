@@ -1,11 +1,22 @@
+import { useEffect, useRef } from "react";
 import akzLogo from "@/assets/akz-logo.png";
 import CheckInForm from "@/components/CheckInForm";
 
 const Index = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.playbackRate = 0.6;
+    }
+  }, []);
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-black">
-      {/* High-End Aurora Video Background - Standard HTML5 Loop */}
+      {/* High-End Aurora Video Background - Standard HTML5 Loop at 60% speed */}
       <video
+        ref={videoRef}
         autoPlay
         loop
         muted
