@@ -88,14 +88,15 @@
     min-height: 100vh;
   }
 
-  /* iOS Cursor/Caret Fix - Forces correct positioning */
+  /* iOS Cursor/Caret Fix - Padding Strategy for Safari */
   input,
   textarea,
   select {
-    line-height: normal !important;
-    padding-top: 14px;
-    padding-bottom: 14px;
-    min-height: 50px;
+    height: auto !important;
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+    line-height: 1.3 !important;
+    transform: translate3d(0, 0, 0); /* Force GPU layer for Safari glassmorphism fix */
     display: block; /* Avoid flex on input itself - causes Safari cursor issues */
   }
 }
