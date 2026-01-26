@@ -100,47 +100,56 @@
   }
 }
 
-@layer components {
-  /* Premium Glassmorphism Input - iOS Safe */
-  .glass-input {
-    display: block;
-    width: 100%;
-    padding: 16px 20px;
-    border-radius: 16px;
-    font-size: 16px; /* Prevents iOS zoom on focus */
-    line-height: 1.4;
-    color: white;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
-    color-scheme: dark;
-  }
-
-  .glass-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
-  }
-
-  /* iOS Date Input Fix */
-  .glass-input[type="date"] {
-    min-height: 54px;
-  }
-
-  .glass-input:hover {
-    border-color: rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .glass-input:focus {
-    outline: none;
-    border-color: #39E078;
-    background: rgba(57, 224, 120, 0.03);
-    box-shadow: 
-      0 0 0 1px rgba(57, 224, 120, 0.3),
-      0 0 30px rgba(57, 224, 120, 0.15),
-      0 0 60px rgba(57, 224, 120, 0.05);
-  }
+ @layer components {
+   /* iOS-Safe Glassmorphism Input - Wrapper Pattern */
+   .glass-input-wrapper {
+     position: relative;
+     width: 100%;
+     border-radius: 16px;
+     background: rgba(255, 255, 255, 0.03);
+     border: 1px solid rgba(255, 255, 255, 0.08);
+     backdrop-filter: blur(20px);
+     -webkit-backdrop-filter: blur(20px);
+     transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+     overflow: hidden; /* Ensures child input respects border-radius */
+   }
+ 
+   .glass-input-wrapper:hover {
+     border-color: rgba(255, 255, 255, 0.15);
+     background: rgba(255, 255, 255, 0.05);
+   }
+ 
+   .glass-input-wrapper:focus-within {
+     border-color: #39E078;
+     background: rgba(57, 224, 120, 0.03);
+     box-shadow: 
+       0 0 0 1px rgba(57, 224, 120, 0.3),
+       0 0 30px rgba(57, 224, 120, 0.15),
+       0 0 60px rgba(57, 224, 120, 0.05);
+   }
+ 
+   /* Minimal Input Field - NO backdrop-filter, NO transform */
+   .glass-input-field {
+     display: block;
+     width: 100%;
+     padding: 16px 20px;
+     border: none;
+     background: transparent;
+     font-size: 16px; /* Prevents iOS zoom on focus */
+     line-height: normal; /* CRITICAL for iOS cursor positioning */
+     color: white;
+     color-scheme: dark;
+     outline: none;
+   }
+ 
+   .glass-input-field::placeholder {
+     color: rgba(255, 255, 255, 0.4);
+   }
+ 
+   /* iOS Date Input - Extra Height */
+   .glass-input-field[type="date"] {
+     min-height: 54px;
+   }
 
   /* Aurora Card Selection - Premium Glass */
   .aurora-card {
