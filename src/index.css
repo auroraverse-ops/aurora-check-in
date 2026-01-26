@@ -104,14 +104,17 @@
    /* iOS-Safe Glassmorphism Input - Wrapper Pattern */
    .glass-input-wrapper {
      position: relative;
+     display: flex;
+     align-items: stretch;
      width: 100%;
+     padding: 0;
      border-radius: 16px;
      background: rgba(255, 255, 255, 0.03);
      border: 1px solid rgba(255, 255, 255, 0.08);
      backdrop-filter: blur(20px);
      -webkit-backdrop-filter: blur(20px);
      transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
-     overflow: hidden; /* Ensures child input respects border-radius */
+     overflow: hidden;
    }
  
    .glass-input-wrapper:hover {
@@ -132,13 +135,20 @@
    .glass-input-field {
      display: block;
      width: 100%;
-     padding: 16px 20px;
+     height: auto !important;
+     padding-top: 16px !important;
+     padding-bottom: 16px !important;
+     padding-left: 20px;
+     padding-right: 20px;
+     margin: 0;
      border: none;
      background: transparent;
      font-size: 16px; /* Prevents iOS zoom on focus */
-     line-height: normal; /* CRITICAL for iOS cursor positioning */
+     line-height: 1.4 !important; /* CRITICAL for iOS cursor positioning */
      color: white;
+     -webkit-text-fill-color: white; /* iOS text visibility fix */
      color-scheme: dark;
+     opacity: 1; /* iOS transparency bug fix */
      outline: none;
    }
  
