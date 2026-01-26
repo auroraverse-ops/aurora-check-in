@@ -87,6 +87,17 @@
     background-color: #020B0F;
     min-height: 100vh;
   }
+
+  /* iOS Cursor/Caret Fix - Forces correct positioning */
+  input,
+  textarea,
+  select {
+    line-height: normal !important;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    min-height: 50px;
+    display: block; /* Avoid flex on input itself - causes Safari cursor issues */
+  }
 }
 
 @layer components {
