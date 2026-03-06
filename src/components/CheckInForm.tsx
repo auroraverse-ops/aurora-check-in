@@ -29,9 +29,7 @@ const checkInSchema = z.object({
   hobbys: z.array(z.string()),
   bildschirmzeit: z.number().min(0).max(16),
   beschwerden: z.array(z.string()),
-  datenschutz: z.literal(true, {
-    errorMap: () => ({ message: "Datenschutz muss akzeptiert werden" }),
-  }),
+  datenschutz: z.boolean(),
   erinnerung: z.boolean(),
 });
 
@@ -73,6 +71,15 @@ const CheckInForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.datenschutz) {
+      toast({
+        title: "Datenschutz erforderlich",
+        description: "Bitte akzeptiere die Datenschutzbestimmungen, um fortzufahren.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const result = checkInSchema.safeParse(formData);
 
@@ -128,7 +135,7 @@ const CheckInForm = () => {
         bildschirmzeit: 5,
         beschwerden: [],
         datenschutz: false,
-        erinnerung: true,
+        erinnerung: false,
       });
     } catch (error) {
       console.error("Check-in error:", error);
@@ -281,7 +288,7 @@ const CheckInForm = () => {
       <div className="pt-6">
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || !formData.datenschutz}
           className="aurora-button"
         >
           {isLoading ? "WIRD VERARBEITET..." : "JETZT EINCHECKEN"}
