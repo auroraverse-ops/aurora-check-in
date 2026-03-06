@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import GlassInput from "./GlassInput";
 import SehhilfeCard from "./SehhilfeCard";
@@ -36,6 +36,13 @@ const checkInSchema = z.object({
 const CheckInForm = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!isSuccess) return;
+    const timer = setTimeout(() => setIsSuccess(false), 10000);
+    return () => clearTimeout(timer);
+  }, [isSuccess]);
 
   const [formData, setFormData] = useState({
     vorname: "",
@@ -45,7 +52,7 @@ const CheckInForm = () => {
     email: "",
     sehhilfe: [] as string[],
     hobbys: [] as string[],
-    bildschirmzeit: 5,
+    bildschirmzeit: 10,
     beschwerden: [] as string[],
     datenschutz: false,
     erinnerung: true,
@@ -119,10 +126,7 @@ const CheckInForm = () => {
         throw new Error(errorData?.error || `Server-Fehler (${response.status})`);
       }
 
-      toast({
-        title: "Erfolgreich eingecheckt!",
-        description: "Willkommen bei AURORA. Wir freuen uns auf deinen Besuch.",
-      });
+      setIsSuccess(true);
 
       setFormData({
         vorname: "",
@@ -132,7 +136,7 @@ const CheckInForm = () => {
         email: "",
         sehhilfe: [],
         hobbys: [],
-        bildschirmzeit: 5,
+        bildschirmzeit: 10,
         beschwerden: [],
         datenschutz: false,
         erinnerung: false,
@@ -148,6 +152,27 @@ const CheckInForm = () => {
       setIsLoading(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center py-20 space-y-6">
+        <div className="w-20 h-20 rounded-full bg-[#39E078]/20 flex items-center justify-center mb-4">
+          <svg className="w-10 h-10 text-[#39E078]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="text-3xl font-bold text-white leading-snug">
+          Willkommen im Augenkompetenzzentrum,
+        </h2>
+        <p className="text-xl text-white/80 font-medium">
+          Schön dass du da bist!
+        </p>
+        <p className="text-lg text-white/60">
+          Es geht gleich los.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -280,7 +305,7 @@ const CheckInForm = () => {
           id="erinnerung"
           checked={formData.erinnerung}
           onChange={(checked) => handleInputChange("erinnerung", checked)}
-          label="Ja, erinnere mich bitte kostenlos an meinen nächsten Sehtest (via SMS/E-Mail), damit meine Sehkraft optimal bleibt."
+          label="Ja, erinnere mich bitte kostenlos an meinen nächsten Augenvorsorgecheck (via SMS/E-Mail), damit meine Sehkraft optimal bleibt."
         />
       </div>
 

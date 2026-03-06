@@ -417,7 +417,7 @@
 
   /* Form Label */
   .form-label {
-    @apply block text-sm font-medium mb-3 tracking-wide;
+    @apply block text-base font-semibold mb-3 tracking-wide;
     color: hsl(var(--aurora-text-muted));
   }
 

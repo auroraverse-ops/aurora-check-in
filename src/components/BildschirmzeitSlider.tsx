@@ -10,8 +10,8 @@ const BildschirmzeitSlider = ({ value, onChange }: BildschirmzeitSliderProps) =>
       <div className="glass-input-wrapper px-5 py-5">
         <div className="w-full space-y-4">
           <div className="flex justify-between items-baseline">
-            <span className="text-2xl font-bold text-white">
-              {value} <span className="text-sm font-normal text-white/50">Stunden / Tag</span>
+            <span className="text-3xl font-bold text-white">
+              {value} <span className="text-base font-normal text-white/50">Stunden / Tag</span>
             </span>
           </div>
           <input

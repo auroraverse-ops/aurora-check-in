@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
-import akzLogo from "@/assets/akz-logo.png";
 import CheckInForm from "@/components/CheckInForm";
-import { getStandortName } from "@/lib/standorte";
+import { getStandortName, getStandortLogo } from "@/lib/standorte";
 
 const Index = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -38,30 +37,30 @@ const Index = () => {
           <div className="logo-glow" />
           
           <div className="relative z-10 flex justify-center mb-8">
-            <img 
-              src={akzLogo} 
-              alt="Augen Kompetenz Zentrum Logo" 
-              className="w-56 h-auto object-contain"
+            <img
+              src={getStandortLogo()}
+              alt="Augen Kompetenz Zentrum Logo"
+              className="w-72 h-auto object-contain"
               style={{
                 mixBlendMode: 'screen',
                 filter: 'drop-shadow(0 0 30px rgba(57, 224, 120, 0.2))'
               }}
             />
           </div>
-          <p className="text-white/90 text-lg font-light tracking-widest uppercase">
+          <p className="text-white/90 text-xl font-medium tracking-widest uppercase">
             Willkommen im Augenkompetenzzentrum {getStandortName()}
           </p>
-          <p className="text-white/40 text-sm mt-2 tracking-wide">
+          <p className="text-white/40 text-base mt-2 tracking-wide">
             Smart Check-in für deinen Besuch
           </p>
         </header>
 
         {/* Hero Section */}
         <section className="text-center mb-14">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4 leading-tight">
+          <h1 className="text-5xl md:text-6xl font-extrabold text-white tracking-tight mb-4 leading-tight">
             Smart Check-in
           </h1>
-          <p className="text-white/35 text-sm tracking-wide">
+          <p className="text-white/35 text-base tracking-wide">
             Dauert nur 60 Sekunden.
           </p>
         </section>

@@ -19,7 +19,7 @@ const AuroraCheckbox = ({ id, checked, onChange, label, required }: AuroraCheckb
       >
         {checked && <Check className="w-4 h-4 text-aurora-dark" strokeWidth={3} />}
       </div>
-      <span className="text-sm text-white/50 leading-relaxed group-hover:text-white/70 transition-colors duration-300">
+      <span className="text-base text-white/50 leading-relaxed group-hover:text-white/70 transition-colors duration-300">
         {label}
         {required && <span className="text-aurora-glow ml-1">*</span>}
       </span>
