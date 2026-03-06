@@ -11,7 +11,7 @@ interface AuroraCheckboxProps {
 
 const AuroraCheckbox = ({ id, checked, onChange, label, required }: AuroraCheckboxProps) => {
   return (
-    <label htmlFor={id} className="flex items-start gap-4 cursor-pointer group">
+    <label className="flex items-start gap-4 cursor-pointer group">
       <button
         type="button"
         id={id}
