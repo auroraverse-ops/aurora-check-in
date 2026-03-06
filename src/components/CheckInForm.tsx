@@ -101,11 +101,16 @@ const CheckInForm = () => {
         source: "aurora-checkin",
       };
 
-      await fetch(webhookUrl, {
+      const response = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `Server-Fehler (${response.status})`);
+      }
 
       toast({
         title: "Erfolgreich eingecheckt!",
