@@ -3,7 +3,21 @@ import { useToast } from "@/hooks/use-toast";
 import GlassInput from "./GlassInput";
 import SehhilfeCard from "./SehhilfeCard";
 import AuroraCheckbox from "./AuroraCheckbox";
+import ChipSelector from "./ChipSelector";
+import BildschirmzeitSlider from "./BildschirmzeitSlider";
+import { getStandortId } from "@/lib/standorte";
 import { z } from "zod";
+
+const HOBBY_OPTIONS = [
+  "Radfahren", "Wandern", "Joggen", "Anderer Sport",
+  "Lesen", "Modellbau", "Puzzle", "Gartenarbeit",
+  "Nichts davon",
+];
+
+const BESCHWERDE_OPTIONS = [
+  "Trockene Augen", "Nackenschmerzen", "Lichtempfindlichkeit",
+  "Nichts davon",
+];
 
 const checkInSchema = z.object({
   vorname: z.string().trim().min(1, "Vorname ist erforderlich").max(50),
@@ -11,46 +25,57 @@ const checkInSchema = z.object({
   geburtsdatum: z.string().min(1, "Geburtsdatum ist erforderlich"),
   handy: z.string().trim().min(1, "Handynummer ist erforderlich").max(20),
   email: z.string().trim().email("Ungültige E-Mail-Adresse").max(100),
-  sehhilfe: z.enum(["brille", "kontaktlinsen", "keine"]),
+  sehhilfe: z.array(z.string()).min(1, "Bitte wähle deine Sehhilfe aus"),
+  hobbys: z.array(z.string()),
+  bildschirmzeit: z.number().min(0).max(16),
+  beschwerden: z.array(z.string()),
   datenschutz: z.literal(true, {
     errorMap: () => ({ message: "Datenschutz muss akzeptiert werden" }),
   }),
   erinnerung: z.boolean(),
 });
 
-type CheckInData = z.infer<typeof checkInSchema>;
-
-const WEBHOOK_URL = "https://neightn.akz-gruppe.de/webhook/Check-in";
-
 const CheckInForm = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     vorname: "",
     nachname: "",
     geburtsdatum: "",
     handy: "+49 ",
     email: "",
-    sehhilfe: "" as "brille" | "kontaktlinsen" | "keine" | "",
+    sehhilfe: [] as string[],
+    hobbys: [] as string[],
+    bildschirmzeit: 5,
+    beschwerden: [] as string[],
     datenschutz: false,
-    erinnerung: false,
+    erinnerung: true,
   });
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | string[] | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSehhilfeToggle = (type: string) => {
+    setFormData((prev) => {
+      if (type === "keine") {
+        return { ...prev, sehhilfe: prev.sehhilfe.includes("keine") ? [] : ["keine"] };
+      }
+      const withoutKeine = prev.sehhilfe.filter((s) => s !== "keine");
+      const isSelected = withoutKeine.includes(type);
+      return {
+        ...prev,
+        sehhilfe: isSelected ? withoutKeine.filter((s) => s !== type) : [...withoutKeine, type],
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const dataToValidate = {
-      ...formData,
-      sehhilfe: formData.sehhilfe || "keine",
-    };
 
-    const result = checkInSchema.safeParse(dataToValidate);
-    
+    const result = checkInSchema.safeParse(formData);
+
     if (!result.success) {
       const firstError = result.error.errors[0];
       toast({
@@ -64,44 +89,47 @@ const CheckInForm = () => {
     setIsLoading(true);
 
     try {
+      const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
+      if (!webhookUrl) {
+        throw new Error("Webhook-URL nicht konfiguriert");
+      }
+
       const payload = {
         ...result.data,
+        standort: getStandortId(),
         timestamp: new Date().toISOString(),
         source: "aurora-checkin",
       };
 
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-        "Authorization": "Basic " + btoa("akz-gruppe:check-in"),
-      };
-
-      await fetch(WEBHOOK_URL, {
+      await fetch(webhookUrl, {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       toast({
         title: "Erfolgreich eingecheckt!",
-        description: "Willkommen bei AURORA. Wir freuen uns auf Ihren Besuch.",
+        description: "Willkommen bei AURORA. Wir freuen uns auf deinen Besuch.",
       });
 
-      // Reset form
       setFormData({
         vorname: "",
         nachname: "",
         geburtsdatum: "",
         handy: "+49 ",
         email: "",
-        sehhilfe: "",
+        sehhilfe: [],
+        hobbys: [],
+        bildschirmzeit: 5,
+        beschwerden: [],
         datenschutz: false,
-        erinnerung: false,
+        erinnerung: true,
       });
     } catch (error) {
       console.error("Check-in error:", error);
       toast({
         title: "Fehler",
-        description: "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+        description: "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
         variant: "destructive",
       });
     } finally {
@@ -151,7 +179,7 @@ const CheckInForm = () => {
         onChange={(e) => handleInputChange("handy", e.target.value)}
         required
       />
-      
+
       <GlassInput
         id="email"
         label="E-Mail"
@@ -162,32 +190,56 @@ const CheckInForm = () => {
         required
       />
 
-      {/* Sehhilfe Selection */}
+      {/* Sehhilfe - Mehrfachauswahl */}
       <div className="space-y-4 pt-2">
         <label className="form-label">
-          Sehhilfe <span className="form-label-required">*</span>
+          Deine Sehhilfe <span className="form-label-required">*</span>
         </label>
         <div className="grid grid-cols-3 gap-4">
           <SehhilfeCard
             type="brille"
             label="Brille"
-            active={formData.sehhilfe === "brille"}
-            onClick={() => handleInputChange("sehhilfe", "brille")}
+            active={formData.sehhilfe.includes("brille")}
+            onClick={() => handleSehhilfeToggle("brille")}
           />
           <SehhilfeCard
             type="kontaktlinsen"
             label="Kontaktlinsen"
-            active={formData.sehhilfe === "kontaktlinsen"}
-            onClick={() => handleInputChange("sehhilfe", "kontaktlinsen")}
+            active={formData.sehhilfe.includes("kontaktlinsen")}
+            onClick={() => handleSehhilfeToggle("kontaktlinsen")}
           />
           <SehhilfeCard
             type="keine"
             label="Keine"
-            active={formData.sehhilfe === "keine"}
-            onClick={() => handleInputChange("sehhilfe", "keine")}
+            active={formData.sehhilfe.includes("keine")}
+            onClick={() => handleSehhilfeToggle("keine")}
           />
         </div>
       </div>
+
+      {/* Hobbys */}
+      <ChipSelector
+        label="Deine Hobbys"
+        options={HOBBY_OPTIONS}
+        noneOption="Nichts davon"
+        selected={formData.hobbys}
+        onChange={(val) => handleInputChange("hobbys", val)}
+      />
+
+      {/* Bildschirmzeit */}
+      <BildschirmzeitSlider
+        value={formData.bildschirmzeit}
+        onChange={(val) => handleInputChange("bildschirmzeit", val)}
+      />
+
+      {/* Beschwerden */}
+      <ChipSelector
+        label="Deine Beschwerden"
+        options={BESCHWERDE_OPTIONS}
+        noneOption="Nichts davon"
+        selected={formData.beschwerden}
+        onChange={(val) => handleInputChange("beschwerden", val)}
+      />
 
       {/* Checkboxes */}
       <div className="space-y-5 pt-4">
@@ -216,7 +268,7 @@ const CheckInForm = () => {
           id="erinnerung"
           checked={formData.erinnerung}
           onChange={(checked) => handleInputChange("erinnerung", checked)}
-          label="Ja, erinnert mich bitte zukünftig kostenlos an meinen nächsten Sehtest (via SMS/E-Mail), damit meine Sehkraft optimal bleibt."
+          label="Ja, erinnere mich bitte kostenlos an meinen nächsten Sehtest (via SMS/E-Mail), damit meine Sehkraft optimal bleibt."
         />
       </div>
 

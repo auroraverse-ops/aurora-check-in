@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import akzLogo from "@/assets/akz-logo.png";
 import CheckInForm from "@/components/CheckInForm";
+import { getStandortName } from "@/lib/standorte";
 
 const Index = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -48,10 +49,10 @@ const Index = () => {
             />
           </div>
           <p className="text-white/90 text-lg font-light tracking-widest uppercase">
-            Willkommen im Augenkompetenzzentrum
+            Willkommen im Augenkompetenzzentrum {getStandortName()}
           </p>
           <p className="text-white/40 text-sm mt-2 tracking-wide">
-            Smart Check-in für Ihren Besuch
+            Smart Check-in für deinen Besuch
           </p>
         </header>
 
@@ -61,7 +62,7 @@ const Index = () => {
             Smart Check-in
           </h1>
           <p className="text-white/35 text-sm tracking-wide">
-            Dauert nur 30 Sekunden.
+            Dauert nur 60 Sekunden.
           </p>
         </section>
 
