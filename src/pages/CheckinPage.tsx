@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type SyntheticEvent } from "react";
 import { useParams } from "react-router-dom";
 import { fetchCheckinConfig, submitCheckin, type CheckinConfig } from "@/lib/checkin-config";
 import CheckInFormDynamic from "@/components/CheckInFormDynamic";
@@ -9,6 +9,7 @@ const CheckinPage = () => {
   const [config, setConfig] = useState<CheckinConfig | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   // Config laden
   const loadConfig = useCallback(async () => {
@@ -99,17 +100,24 @@ const CheckinPage = () => {
         <header className="text-center mb-16 relative">
           <div className="logo-glow" />
 
-          {config?.logo_url && (
+          {config?.logo_url && !logoFailed && (
             <div className="relative z-10 flex justify-center mb-8">
               <img
                 src={config.logo_url}
                 alt={config.tenant_name}
                 className="w-72 h-auto object-contain"
                 style={{
-                  mixBlendMode: "screen",
                   filter: `drop-shadow(0 0 30px ${primaryColor}33)`,
                 }}
+                onError={() => setLogoFailed(true)}
               />
+            </div>
+          )}
+
+          {/* Fallback: Tenant-Name als Text wenn kein Logo */}
+          {(!config?.logo_url || logoFailed) && (
+            <div className="relative z-10 mb-8">
+              <h2 className="text-3xl font-bold text-white tracking-wide">{config?.tenant_name}</h2>
             </div>
           )}
 
