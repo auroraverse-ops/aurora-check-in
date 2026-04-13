@@ -46,6 +46,14 @@
     --aurora-glass-border: 0 0% 100%;
     --aurora-text-muted: 200 15% 70%;
     --aurora-text-subtle: 200 10% 50%;
+
+    /* Glow-Stufen (abgestimmt mit Aurora v2 Design-Tokens) */
+    --glow-brand-sm: 0 0 10px rgba(57, 224, 120, 0.15);
+    --glow-brand-md: 0 0 20px rgba(57, 224, 120, 0.22), 0 0 40px rgba(57, 224, 120, 0.10);
+    --glow-brand-lg: 0 0 30px rgba(57, 224, 120, 0.28), 0 0 60px rgba(57, 224, 120, 0.15);
+
+    --glow-border-brand: rgba(57, 224, 120, 0.40);
+    --glow-border-brand-strong: rgba(57, 224, 120, 0.70);
   }
 
   .dark {
@@ -110,25 +118,26 @@
      padding: 0;
      border-radius: 16px;
      background: rgba(255, 255, 255, 0.03);
-     border: 1px solid rgba(255, 255, 255, 0.08);
+     border: 1px solid rgba(57, 224, 120, 0.18);
      backdrop-filter: blur(20px);
      -webkit-backdrop-filter: blur(20px);
+     box-shadow: var(--glow-brand-sm);
      transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
      overflow: hidden;
    }
- 
+
    .glass-input-wrapper:hover {
-     border-color: rgba(255, 255, 255, 0.15);
-     background: rgba(255, 255, 255, 0.05);
+     border-color: var(--glow-border-brand);
+     background: rgba(57, 224, 120, 0.04);
+     box-shadow: var(--glow-brand-md);
    }
- 
+
    .glass-input-wrapper:focus-within {
-     border-color: #39E078;
-     background: rgba(57, 224, 120, 0.03);
-     box-shadow: 
-       0 0 0 1px rgba(57, 224, 120, 0.3),
-       0 0 30px rgba(57, 224, 120, 0.15),
-       0 0 60px rgba(57, 224, 120, 0.05);
+     border-color: var(--glow-border-brand-strong);
+     background: rgba(57, 224, 120, 0.05);
+     box-shadow:
+       0 0 0 1px rgba(57, 224, 120, 0.35),
+       var(--glow-brand-lg);
    }
  
    /* Minimal Input Field - NO backdrop-filter, NO transform */
@@ -165,26 +174,28 @@
   .aurora-card {
     @apply relative flex flex-col items-center justify-center p-5 rounded-2xl cursor-pointer;
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(57, 224, 120, 0.18);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--glow-brand-sm);
     min-height: 110px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .aurora-card:hover {
-    border-color: rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--glow-border-brand);
+    background: rgba(57, 224, 120, 0.05);
+    box-shadow: var(--glow-brand-md);
     transform: translateY(-3px);
   }
 
   .aurora-card.active {
-    border-color: #39E078;
-    background: rgba(57, 224, 120, 0.08);
-    box-shadow: 
-      0 0 0 1px rgba(57, 224, 120, 0.4),
-      0 0 40px rgba(57, 224, 120, 0.2),
-      inset 0 0 30px rgba(57, 224, 120, 0.05);
+    border-color: var(--glow-border-brand-strong);
+    background: rgba(57, 224, 120, 0.10);
+    box-shadow:
+      0 0 0 1px rgba(57, 224, 120, 0.5),
+      var(--glow-brand-lg),
+      inset 0 0 30px rgba(57, 224, 120, 0.06);
   }
 
   /* Aurora Button - Premium */
@@ -428,14 +439,40 @@
   /* Glass Card for Privacy Page */
   .glass-card {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(57, 224, 120, 0.18);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    box-shadow: var(--glow-brand-sm);
     border-radius: 1.5rem;
   }
 
   /* Aurora Green Link */
   .text-aurora-glow {
     color: #3ce079;
+  }
+
+  /* Chip-Pills (Beschwerden, Hobbys, Sehhilfe-Optionen) */
+  .aurora-chip {
+    @apply py-3 px-4 rounded-xl text-base font-semibold tracking-wide transition-all duration-300 text-center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(57, 224, 120, 0.15);
+    color: rgba(255, 255, 255, 0.55);
+    box-shadow: var(--glow-brand-sm);
+  }
+
+  .aurora-chip:hover {
+    border-color: var(--glow-border-brand);
+    background: rgba(57, 224, 120, 0.04);
+    color: rgba(255, 255, 255, 0.85);
+    box-shadow: var(--glow-brand-md);
+  }
+
+  .aurora-chip.active {
+    background: rgba(57, 224, 120, 0.15);
+    border-color: var(--glow-border-brand-strong);
+    color: #ffffff;
+    box-shadow:
+      0 0 0 1px rgba(57, 224, 120, 0.4),
+      var(--glow-brand-md);
   }
 }
