@@ -7,6 +7,7 @@ import ChipSelector from "./ChipSelector";
 import BildschirmzeitSlider from "./BildschirmzeitSlider";
 import { z } from "zod";
 import type { CheckinConfig } from "@/lib/checkin-config";
+import { CONSENT_TEXTS, hashConsentText } from "@/lib/consent-texts";
 
 const HOBBY_OPTIONS = [
   "Radfahren", "Wandern", "Joggen", "Anderer Sport",
@@ -108,7 +109,14 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
     setIsLoading(true);
 
     try {
-      await onSubmit(result.data);
+      // DSGVO Art. 7: Einwilligungs-Version + Hash des Wortlauts mitgeben.
+      // Damit ist im Nachhinein beweisbar, welcher Text eingewilligt wurde.
+      const consentTextHash = await hashConsentText(CONSENT_TEXTS.datenschutz.text);
+      await onSubmit({
+        ...result.data,
+        consent_text_version: CONSENT_TEXTS.datenschutz.version,
+        consent_text_hash: consentTextHash,
+      });
       setIsSuccess(true);
       setFormData({
         vorname: "",
