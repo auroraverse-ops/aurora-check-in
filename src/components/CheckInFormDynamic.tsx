@@ -8,12 +8,14 @@ import BildschirmzeitSlider from "./BildschirmzeitSlider";
 import { z } from "zod";
 import type { CheckinConfig } from "@/lib/checkin-config";
 import { CONSENT_TEXTS, hashConsentText } from "@/lib/consent-texts";
+import { calculateAge } from "@/lib/age";
 
-const HOBBY_OPTIONS = [
-  "Radfahren", "Wandern", "Joggen", "Anderer Sport",
-  "Lesen", "Modellbau", "Puzzle", "Gartenarbeit",
-  "Nichts davon",
-];
+// Hobby-Kategorien (seit 2026-04-15: v2 Payload-Schema)
+// Motorradfahren ist NEU.
+const HOBBY_SPORT = ["Radfahren", "Motorradfahren", "Wandern", "Joggen", "Anderer Sport"];
+const HOBBY_NAHARBEIT = ["Lesen", "Modellbau", "Puzzle"];
+const HOBBY_OUTDOOR = ["Gartenarbeit"];
+const HOBBY_OPTIONS_ALL = [...HOBBY_SPORT, ...HOBBY_NAHARBEIT, ...HOBBY_OUTDOOR];
 
 const BESCHWERDE_OPTIONS = [
   "Trockene Augen", "Nackenschmerzen", "Lichtempfindlichkeit",
@@ -30,6 +32,7 @@ const checkInSchema = z.object({
   hobbys: z.array(z.string()),
   bildschirmzeit: z.number().min(0).max(16),
   beschwerden: z.array(z.string()),
+  gruppen_gespraeche: z.boolean().optional(),
   datenschutz: z.boolean(),
   erinnerung: z.boolean(),
 });
@@ -38,6 +41,8 @@ interface Props {
   config: CheckinConfig;
   onSubmit: (data: Record<string, unknown>) => Promise<unknown>;
 }
+
+const AKUSTIK_AB_ALTER = 50;
 
 const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
   const { toast } = useToast();
@@ -60,24 +65,30 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
     hobbys: [] as string[],
     bildschirmzeit: 10,
     beschwerden: [] as string[],
+    gruppen_gespraeche: false,
     datenschutz: false,
     erinnerung: true,
   });
+
+  // Akustik-Frage: nur sichtbar wenn Feature-Flag aktiv UND Kunde >= 50 Jahre
+  const alter = calculateAge(formData.geburtsdatum);
+  const akustikAktiv = !!config.features?.akustik;
+  const zeigeAkustikFrage = akustikAktiv && alter >= AKUSTIK_AB_ALTER;
 
   const handleInputChange = (field: string, value: string | boolean | string[] | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSehhilfeToggle = (type: string) => {
+    // Seit 2026-04-15: "Keine" ist entfernt — ersetzt durch "Sonnenbrille ohne Stärke".
+    // Mehrfachauswahl erlaubt (Brille + Sonnenbrille ist realistisch).
     setFormData((prev) => {
-      if (type === "keine") {
-        return { ...prev, sehhilfe: prev.sehhilfe.includes("keine") ? [] : ["keine"] };
-      }
-      const withoutKeine = prev.sehhilfe.filter((s) => s !== "keine");
-      const isSelected = withoutKeine.includes(type);
+      const isSelected = prev.sehhilfe.includes(type);
       return {
         ...prev,
-        sehhilfe: isSelected ? withoutKeine.filter((s) => s !== type) : [...withoutKeine, type],
+        sehhilfe: isSelected
+          ? prev.sehhilfe.filter((s) => s !== type)
+          : [...prev.sehhilfe, type],
       };
     });
   };
@@ -109,14 +120,51 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
     setIsLoading(true);
 
     try {
-      // DSGVO Art. 7: Einwilligungs-Version + Hash des Wortlauts mitgeben.
-      // Damit ist im Nachhinein beweisbar, welcher Text eingewilligt wurde.
       const consentTextHash = await hashConsentText(CONSENT_TEXTS.datenschutz.text);
-      await onSubmit({
-        ...result.data,
+
+      // v2 Payload — strukturiert, kein Matching mehr nötig
+      const sehhilfeObj = {
+        brille: formData.sehhilfe.includes("brille"),
+        kontaktlinsen: formData.sehhilfe.includes("kontaktlinsen"),
+        sonnenbrille_ohne_staerke: formData.sehhilfe.includes("sonnenbrille_ohne_staerke"),
+      };
+
+      const hobbysObj = {
+        sport: formData.hobbys.filter((h) => HOBBY_SPORT.includes(h)),
+        naharbeit: formData.hobbys.filter((h) => HOBBY_NAHARBEIT.includes(h)),
+        outdoor: formData.hobbys.filter((h) => HOBBY_OUTDOOR.includes(h)),
+      };
+
+      const beschwerdenObj = {
+        trockene_augen: formData.beschwerden.includes("Trockene Augen"),
+        nackenschmerzen: formData.beschwerden.includes("Nackenschmerzen"),
+        lichtempfindlichkeit: formData.beschwerden.includes("Lichtempfindlichkeit"),
+      };
+
+      const payload: Record<string, unknown> = {
+        _schema: 2,
+        vorname: result.data.vorname,
+        nachname: result.data.nachname,
+        geburtsdatum: result.data.geburtsdatum,
+        handy: result.data.handy,
+        email: result.data.email,
+        sehhilfe: sehhilfeObj,
+        hobbys: hobbysObj,
+        bildschirmzeit: result.data.bildschirmzeit,
+        beschwerden: beschwerdenObj,
+        datenschutz: result.data.datenschutz,
+        erinnerung: result.data.erinnerung,
         consent_text_version: CONSENT_TEXTS.datenschutz.version,
         consent_text_hash: consentTextHash,
-      });
+      };
+
+      if (zeigeAkustikFrage) {
+        payload.akustik = {
+          gespraeche_in_gruppen: formData.gruppen_gespraeche,
+        };
+      }
+
+      await onSubmit(payload);
       setIsSuccess(true);
       setFormData({
         vorname: "",
@@ -128,6 +176,7 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         hobbys: [],
         bildschirmzeit: 10,
         beschwerden: [],
+        gruppen_gespraeche: false,
         datenschutz: false,
         erinnerung: false,
       });
@@ -203,22 +252,34 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         required
       />
 
-      {/* Sehhilfe */}
+      {/* Sehhilfe — 2026-04-15: "Keine" entfernt, "Sonnenbrille ohne Stärke" neu */}
       <div className="space-y-4 pt-2">
         <label className="form-label">
-          Deine Sehhilfe <span className="form-label-required">*</span>
+          Deine bisherige Sehhilfe <span className="form-label-required">*</span>
         </label>
         <div className="grid grid-cols-3 gap-4">
-          <SehhilfeCard type="brille" label="Brille" active={formData.sehhilfe.includes("brille")} onClick={() => handleSehhilfeToggle("brille")} />
-          <SehhilfeCard type="kontaktlinsen" label="Kontaktlinsen" active={formData.sehhilfe.includes("kontaktlinsen")} onClick={() => handleSehhilfeToggle("kontaktlinsen")} />
-          <SehhilfeCard type="keine" label="Keine" active={formData.sehhilfe.includes("keine")} onClick={() => handleSehhilfeToggle("keine")} />
+          <SehhilfeCard
+            type="brille" label="Brille"
+            active={formData.sehhilfe.includes("brille")}
+            onClick={() => handleSehhilfeToggle("brille")}
+          />
+          <SehhilfeCard
+            type="kontaktlinsen" label="Kontaktlinsen"
+            active={formData.sehhilfe.includes("kontaktlinsen")}
+            onClick={() => handleSehhilfeToggle("kontaktlinsen")}
+          />
+          <SehhilfeCard
+            type="sonnenbrille_ohne_staerke" label="Sonnenbrille ohne Stärke"
+            active={formData.sehhilfe.includes("sonnenbrille_ohne_staerke")}
+            onClick={() => handleSehhilfeToggle("sonnenbrille_ohne_staerke")}
+          />
         </div>
       </div>
 
       {/* Optionale Felder — per Config gesteuert */}
       {config.fields.hobbys && (
         <ChipSelector
-          label="Deine Hobbys" options={HOBBY_OPTIONS} noneOption="Nichts davon"
+          label="Deine Hobbys" options={HOBBY_OPTIONS_ALL} noneOption="Nichts davon"
           selected={formData.hobbys}
           onChange={(val) => handleInputChange("hobbys", val)}
         />
@@ -226,6 +287,8 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
 
       {config.fields.bildschirmzeit && (
         <BildschirmzeitSlider
+          label="Durchschnittliche tägliche Bildschirmzeit"
+          hint="(Smartphone, PC, Laptop, iPad, TV)"
           value={formData.bildschirmzeit}
           onChange={(val) => handleInputChange("bildschirmzeit", val)}
         />
@@ -237,6 +300,19 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
           selected={formData.beschwerden}
           onChange={(val) => handleInputChange("beschwerden", val)}
         />
+      )}
+
+      {/* Akustik-Frage — nur bei aktivem Feature UND Alter >= 50 */}
+      {zeigeAkustikFrage && (
+        <div className="space-y-3 pt-2">
+          <label className="form-label">Dein Hören</label>
+          <AuroraCheckbox
+            id="gruppen_gespraeche"
+            checked={formData.gruppen_gespraeche}
+            onChange={(checked) => handleInputChange("gruppen_gespraeche", checked)}
+            label="Ich habe manchmal Probleme bei Gesprächen in Gruppen."
+          />
+        </div>
       )}
 
       {/* Checkboxes */}

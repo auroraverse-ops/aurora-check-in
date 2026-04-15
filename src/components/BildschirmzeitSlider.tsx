@@ -1,12 +1,17 @@
 interface BildschirmzeitSliderProps {
   value: number;
   onChange: (value: number) => void;
+  label?: string;
+  hint?: string;
 }
 
-const BildschirmzeitSlider = ({ value, onChange }: BildschirmzeitSliderProps) => {
+const BildschirmzeitSlider = ({ value, onChange, label, hint }: BildschirmzeitSliderProps) => {
   return (
     <div className="space-y-4 pt-2">
-      <label className="form-label">Bildschirmzeit</label>
+      <label className="form-label">
+        {label ?? "Durchschnittliche tägliche Bildschirmzeit"}
+        {hint && <span className="block text-xs font-normal text-white/40 mt-1">{hint}</span>}
+      </label>
       <div className="glass-input-wrapper px-5 py-5">
         <div className="w-full space-y-4">
           <div className="flex justify-between items-baseline">

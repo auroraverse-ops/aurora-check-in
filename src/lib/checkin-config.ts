@@ -14,6 +14,14 @@ export interface CheckinConfig {
     beschwerden: boolean
     bildschirmzeit: boolean
   }
+  /**
+   * Tenant-Feature-Flags die das Formular beeinflussen.
+   * Wird seit Edge-Function-Update 2026-04-15 ausgeliefert. Optional für
+   * Rückwärtskompatibilität mit älteren Backend-Versionen.
+   */
+  features?: {
+    akustik?: boolean
+  }
   primary_color: string | null
   submit_url: string
   submit_token: string

@@ -1,7 +1,7 @@
-import { Glasses, Eye, EyeOff } from "lucide-react";
+import { Glasses, Eye, Sun } from "lucide-react";
 
 interface SehhilfeCardProps {
-  type: "brille" | "kontaktlinsen" | "keine";
+  type: "brille" | "kontaktlinsen" | "sonnenbrille_ohne_staerke";
   label: string;
   active: boolean;
   onClick: () => void;
@@ -11,7 +11,7 @@ const SehhilfeCard = ({ type, label, active, onClick }: SehhilfeCardProps) => {
   const icons = {
     brille: Glasses,
     kontaktlinsen: Eye,
-    keine: EyeOff,
+    sonnenbrille_ohne_staerke: Sun,
   };
 
   const Icon = icons[type];
