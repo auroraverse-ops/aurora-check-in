@@ -6,6 +6,15 @@ FROM node:18-alpine AS builder
 # Set working directory
 WORKDIR /app
 
+# Build-time environment variables fuer Vite.
+# Coolify setzt diese als Build-Args; Default ist Test-Supabase.
+ARG VITE_SUPABASE_URL=https://supabase-test.askitech.de
+ARG VITE_STANDORT
+ARG VITE_N8N_WEBHOOK_URL
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_STANDORT=$VITE_STANDORT
+ENV VITE_N8N_WEBHOOK_URL=$VITE_N8N_WEBHOOK_URL
+
 # Copy package files
 COPY package*.json ./
 COPY bun.lockb ./
