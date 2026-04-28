@@ -1,7 +1,75 @@
-import { useState, useEffect, useRef, useCallback, type SyntheticEvent } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, type SyntheticEvent } from "react";
 import { useParams } from "react-router-dom";
 import { fetchCheckinConfig, submitCheckin, type CheckinConfig } from "@/lib/checkin-config";
 import CheckInFormDynamic from "@/components/CheckInFormDynamic";
+
+// Aurora-Defaults (Migration 173 in aurora-v2): Neon-Gruen.
+const DEFAULT_BRAND_H = 130;
+const DEFAULT_BRAND_S = 82;
+const DEFAULT_BRAND_L = 49;
+
+// Lightness-Clamping: L zwischen 30 und 70 fuer brauchbare Buttons/Borders.
+// Ohne Clamp wuerde z.B. ein dunkles CI-Blau (#0e1353 ~ L=20) Borders unsichtbar machen.
+function clampL(l: number): number {
+  return Math.max(30, Math.min(70, l));
+}
+
+// Kontrast-Farbe (Schwarz/Weiss) fuer Text auf Brand-Background.
+// Vereinfachte WCAG-Annaeherung: hellere Brand-Farbe -> schwarzer Text.
+function getContrast(h: number, s: number, l: number): string {
+  // Heuristik: bei L > 60 (helle Farben) Schwarz, sonst Weiss.
+  // Im Aurora-Default (L=49) -> Schwarz (Aurora-Gruen ist hell genug).
+  // Wir nutzen aber gewichteten Wert weil reines L bei niedriger Saturation truegt.
+  const effectiveL = l + (s / 100) * 5; // grobe Annaeherung an Wahrnehmungs-L
+  return effectiveL > 60 ? "#000000" : "#ffffff";
+}
+
+// HSL-Triplet -> Hex-String fuer Inline-Drop-Shadow am Logo.
+function hslToHex(h: number, s: number, l: number): string {
+  const sN = s / 100;
+  const lN = l / 100;
+  const a = sN * Math.min(lN, 1 - lN);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const c = lN - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * c).toString(16).padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// Hex-String -> HSL-Triplet (fuer Legacy primary_color, der auch die CSS-Vars
+// fuer Buttons/Cards/Borders steuern soll, nicht nur den Logo-Shadow).
+function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
+  const match = /^#?([a-f\d]{3}|[a-f\d]{6})$/i.test(hex.trim()) ? hex.trim().replace(/^#/, "") : null;
+  if (!match) return null;
+  let hStr = match;
+  if (hStr.length === 3) {
+    hStr = hStr.split("").map((c) => c + c).join("");
+  }
+  const r = parseInt(hStr.slice(0, 2), 16) / 255;
+  const g = parseInt(hStr.slice(2, 4), 16) / 255;
+  const b = parseInt(hStr.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const lN = (max + min) / 2;
+  let hN = 0;
+  let sN = 0;
+  if (max !== min) {
+    const d = max - min;
+    sN = lN > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: hN = ((g - b) / d + (g < b ? 6 : 0)); break;
+      case g: hN = ((b - r) / d + 2); break;
+      case b: hN = ((r - g) / d + 4); break;
+    }
+    hN /= 6;
+  }
+  return {
+    h: Math.round(hN * 360),
+    s: Math.round(sN * 100),
+    l: Math.round(lN * 100),
+  };
+}
 
 const CheckinPage = () => {
   const { tenant, filiale } = useParams<{ tenant: string; filiale?: string }>();
@@ -50,8 +118,62 @@ const CheckinPage = () => {
     return submitCheckin(config.submit_url, config.submit_token, data);
   };
 
-  // Primärfarbe als CSS-Variable setzen
-  const primaryColor = config?.primary_color || "#39E078";
+  // Welle 9 (2026-04-28): Markenfarbe aus tenant_theme aufloesen.
+  // Reihenfolge: legacy primary_color (Hex-Override) -> brand_color (HSL) -> Default.
+  // Wenn legacy primary_color als Hex gesetzt ist, parsen wir ihn zu HSL und
+  // nutzen ihn fuer ALLE Akzente (nicht nur Logo-Shadow). So bleibt Bestand-
+  // Konfig wirksam, gewinnt aber konsistent in der gesamten App.
+  // Setzt CSS-Variablen --brand-h/-s/-l/-contrast am documentElement, sodass
+  // ALLE Aurora-Akzente (Buttons, Cards, Borders, Glows, Chips) automatisch folgen.
+  const brandHsl = useMemo(() => {
+    if (!config) {
+      return {
+        h: DEFAULT_BRAND_H,
+        s: DEFAULT_BRAND_S,
+        l: DEFAULT_BRAND_L,
+        legacyHex: null as string | null,
+      };
+    }
+    // 1. Legacy Hex hat Vorrang wenn gesetzt
+    if (config.primary_color) {
+      const fromHex = hexToHsl(config.primary_color);
+      if (fromHex) {
+        return {
+          h: fromHex.h,
+          s: fromHex.s,
+          l: clampL(fromHex.l),
+          legacyHex: config.primary_color,
+        };
+      }
+      // Hex unparsbar -> ignorieren, weiter mit brand_color
+    }
+    // 2. Tenant-Theme HSL aus Edge-Function
+    const h = config.brand_color?.h ?? DEFAULT_BRAND_H;
+    const s = config.brand_color?.s ?? DEFAULT_BRAND_S;
+    const l = clampL(config.brand_color?.l ?? DEFAULT_BRAND_L);
+    return {
+      h,
+      s,
+      l,
+      legacyHex: null,
+    };
+  }, [config]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--brand-h", String(brandHsl.h));
+    root.style.setProperty("--brand-s", `${brandHsl.s}%`);
+    root.style.setProperty("--brand-l", `${brandHsl.l}%`);
+    root.style.setProperty(
+      "--brand-contrast",
+      getContrast(brandHsl.h, brandHsl.s, brandHsl.l),
+    );
+  }, [brandHsl]);
+
+  // Hex-Wert fuer Inline-Drop-Shadow am Logo.
+  // Legacy primary_color (falls gesetzt) gewinnt, sonst aus HSL berechnet.
+  const primaryColor = brandHsl.legacyHex
+    || hslToHex(brandHsl.h, brandHsl.s, brandHsl.l);
 
   if (loading) {
     return (
@@ -78,7 +200,7 @@ const CheckinPage = () => {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-black" style={{ "--aurora-primary": primaryColor } as React.CSSProperties}>
+    <div className="min-h-screen relative overflow-hidden bg-black">
       {/* Video Background */}
       <video
         ref={videoRef}

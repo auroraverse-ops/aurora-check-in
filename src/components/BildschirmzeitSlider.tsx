@@ -26,9 +26,14 @@ const BildschirmzeitSlider = ({ value, onChange, label, hint }: BildschirmzeitSl
             step={1}
             value={value}
             onChange={(e) => onChange(Number(e.target.value))}
-            className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[#39E078]"
+            className="w-full h-2 rounded-full appearance-none cursor-pointer"
             style={{
-              background: `linear-gradient(to right, #39E078 0%, #39E078 ${(value / 16) * 100}%, rgba(255,255,255,0.1) ${(value / 16) * 100}%, rgba(255,255,255,0.1) 100%)`,
+              accentColor: 'hsl(var(--brand-h) var(--brand-s) var(--brand-l))',
+              background: `linear-gradient(to right,
+                hsl(var(--brand-h) var(--brand-s) var(--brand-l)) 0%,
+                hsl(var(--brand-h) var(--brand-s) var(--brand-l)) ${(value / 16) * 100}%,
+                rgba(255,255,255,0.1) ${(value / 16) * 100}%,
+                rgba(255,255,255,0.1) 100%)`,
             }}
           />
           <div className="flex justify-between text-xs text-white/30">

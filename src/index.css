@@ -47,13 +47,29 @@
     --aurora-text-muted: 200 15% 70%;
     --aurora-text-subtle: 200 10% 50%;
 
-    /* Glow-Stufen (abgestimmt mit Aurora v2 Design-Tokens) */
-    --glow-brand-sm: 0 0 10px rgba(57, 224, 120, 0.15);
-    --glow-brand-md: 0 0 20px rgba(57, 224, 120, 0.22), 0 0 40px rgba(57, 224, 120, 0.10);
-    --glow-brand-lg: 0 0 30px rgba(57, 224, 120, 0.28), 0 0 60px rgba(57, 224, 120, 0.15);
+    /*
+      Tenant-Brand-Color (HSL-Triplet, gesetzt von CheckinPage zur Laufzeit).
+      Default = Aurora Neon-Green analog Migration 173 in aurora-v2.
+      Welle 9 (2026-04-28): Wenn die Edge-Function checkin-config eine
+      Tenant-spezifische Markenfarbe liefert, wird sie hier ueberschrieben.
+      Ohne Config bleibt es Aurora-Gruen — die App sieht aus wie immer.
+    */
+    --brand-h: 130;
+    --brand-s: 82%;
+    --brand-l: 49%;
+    --brand-contrast: #000000;
 
-    --glow-border-brand: rgba(57, 224, 120, 0.40);
-    --glow-border-brand-strong: rgba(57, 224, 120, 0.70);
+    /* Glow-Stufen — folgen der Markenfarbe via HSLA. */
+    --glow-brand-sm: 0 0 10px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.15);
+    --glow-brand-md:
+      0 0 20px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.22),
+      0 0 40px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.10);
+    --glow-brand-lg:
+      0 0 30px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.28),
+      0 0 60px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.15);
+
+    --glow-border-brand: hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.40);
+    --glow-border-brand-strong: hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.70);
   }
 
   .dark {
@@ -118,7 +134,7 @@
      padding: 0;
      border-radius: 16px;
      background: rgba(255, 255, 255, 0.03);
-     border: 1px solid rgba(57, 224, 120, 0.18);
+     border: 1px solid hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.18);
      backdrop-filter: blur(20px);
      -webkit-backdrop-filter: blur(20px);
      box-shadow: var(--glow-brand-sm);
@@ -128,18 +144,18 @@
 
    .glass-input-wrapper:hover {
      border-color: var(--glow-border-brand);
-     background: rgba(57, 224, 120, 0.04);
+     background: hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.04);
      box-shadow: var(--glow-brand-md);
    }
 
    .glass-input-wrapper:focus-within {
      border-color: var(--glow-border-brand-strong);
-     background: rgba(57, 224, 120, 0.05);
+     background: hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.05);
      box-shadow:
-       0 0 0 1px rgba(57, 224, 120, 0.35),
+       0 0 0 1px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.35),
        var(--glow-brand-lg);
    }
- 
+
    /* Minimal Input Field - NO backdrop-filter, NO transform */
    .glass-input-field {
      display: block;
@@ -160,11 +176,11 @@
      opacity: 1; /* iOS transparency bug fix */
      outline: none;
    }
- 
+
    .glass-input-field::placeholder {
      color: rgba(255, 255, 255, 0.4);
    }
- 
+
    /* iOS Date Input - Extra Height */
    .glass-input-field[type="date"] {
      min-height: 54px;
@@ -174,7 +190,7 @@
   .aurora-card {
     @apply relative flex flex-col items-center justify-center p-5 rounded-2xl cursor-pointer;
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(57, 224, 120, 0.18);
+    border: 1px solid hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.18);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     box-shadow: var(--glow-brand-sm);
@@ -184,36 +200,41 @@
 
   .aurora-card:hover {
     border-color: var(--glow-border-brand);
-    background: rgba(57, 224, 120, 0.05);
+    background: hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.05);
     box-shadow: var(--glow-brand-md);
     transform: translateY(-3px);
   }
 
   .aurora-card.active {
     border-color: var(--glow-border-brand-strong);
-    background: rgba(57, 224, 120, 0.10);
+    background: hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.10);
     box-shadow:
-      0 0 0 1px rgba(57, 224, 120, 0.5),
+      0 0 0 1px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.5),
       var(--glow-brand-lg),
-      inset 0 0 30px rgba(57, 224, 120, 0.06);
+      inset 0 0 30px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.06);
   }
 
   /* Aurora Button - Premium */
   .aurora-button {
     @apply w-full py-5 px-8 rounded-2xl font-bold text-lg tracking-wide transition-all duration-300;
-    background: linear-gradient(135deg, #39E078 0%, #2BC462 100%);
-    color: #020B0F;
-    box-shadow: 
-      0 4px 30px rgba(57, 224, 120, 0.4),
-      0 0 60px rgba(57, 224, 120, 0.2);
+    background:
+      linear-gradient(
+        135deg,
+        hsl(var(--brand-h) var(--brand-s) var(--brand-l)) 0%,
+        hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 8%)) 100%
+      );
+    color: var(--brand-contrast);
+    box-shadow:
+      0 4px 30px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.4),
+      0 0 60px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.2);
     letter-spacing: 0.05em;
   }
 
   .aurora-button:hover {
     transform: translateY(-3px);
-    box-shadow: 
-      0 8px 40px rgba(57, 224, 120, 0.5),
-      0 0 80px rgba(57, 224, 120, 0.3);
+    box-shadow:
+      0 8px 40px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.5),
+      0 0 80px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.3);
   }
 
   .aurora-button:active {
@@ -239,12 +260,12 @@
   }
 
   .aurora-checkbox.checked {
-    background: #39E078;
-    border-color: #39E078;
-    box-shadow: 0 0 20px rgba(57, 224, 120, 0.5);
+    background: hsl(var(--brand-h) var(--brand-s) var(--brand-l));
+    border-color: hsl(var(--brand-h) var(--brand-s) var(--brand-l));
+    box-shadow: 0 0 20px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.5);
   }
 
-  /* Logo Glow Background */
+  /* Logo Glow Background — folgt der Markenfarbe (Welle 9). */
   .logo-glow {
     position: absolute;
     top: -100px;
@@ -254,9 +275,9 @@
     height: 500px;
     background: radial-gradient(
       ellipse at center,
-      rgba(57, 224, 120, 0.12) 0%,
-      rgba(39, 180, 90, 0.08) 20%,
-      rgba(20, 100, 60, 0.04) 40%,
+      hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.12) 0%,
+      hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 12%) / 0.08) 20%,
+      hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 24%) / 0.04) 40%,
       rgba(2, 11, 15, 0) 70%
     );
     pointer-events: none;
@@ -265,6 +286,11 @@
 
   /* ========================================
      AWARD-WINNING AURORA BACKGROUND
+     ========================================
+     Hinweis: Die animierten Blobs nutzen bewusst FESTE Farben
+     (Aurora-Gruen + Indigo + Tinted-Gruen). Sie sind atmosphaerische
+     Akzente, KEIN Brand-Element. Mitskalieren mit der Markenfarbe wuerde
+     gerade bei dunklen Brands den ganzen Hintergrund unbrauchbar machen.
      ======================================== */
   .aurora-animated {
     position: fixed;
@@ -439,40 +465,40 @@
   /* Glass Card for Privacy Page */
   .glass-card {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(57, 224, 120, 0.18);
+    border: 1px solid hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.18);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: var(--glow-brand-sm);
     border-radius: 1.5rem;
   }
 
-  /* Aurora Green Link */
+  /* Aurora Brand Link — folgt der Markenfarbe. */
   .text-aurora-glow {
-    color: #3ce079;
+    color: hsl(var(--brand-h) var(--brand-s) var(--brand-l));
   }
 
   /* Chip-Pills (Beschwerden, Hobbys, Sehhilfe-Optionen) */
   .aurora-chip {
     @apply py-3 px-4 rounded-xl text-base font-semibold tracking-wide transition-all duration-300 text-center;
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(57, 224, 120, 0.15);
+    border: 1px solid hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.15);
     color: rgba(255, 255, 255, 0.55);
     box-shadow: var(--glow-brand-sm);
   }
 
   .aurora-chip:hover {
     border-color: var(--glow-border-brand);
-    background: rgba(57, 224, 120, 0.04);
+    background: hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.04);
     color: rgba(255, 255, 255, 0.85);
     box-shadow: var(--glow-brand-md);
   }
 
   .aurora-chip.active {
-    background: rgba(57, 224, 120, 0.15);
+    background: hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.15);
     border-color: var(--glow-border-brand-strong);
     color: #ffffff;
     box-shadow:
-      0 0 0 1px rgba(57, 224, 120, 0.4),
+      0 0 0 1px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.4),
       var(--glow-brand-md);
   }
 }

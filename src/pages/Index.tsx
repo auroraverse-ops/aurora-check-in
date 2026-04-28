@@ -43,7 +43,7 @@ const Index = () => {
               className="w-72 h-auto object-contain"
               style={{
                 mixBlendMode: 'screen',
-                filter: 'drop-shadow(0 0 30px rgba(57, 224, 120, 0.2))'
+                filter: 'drop-shadow(0 0 30px hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.2))'
               }}
             />
           </div>

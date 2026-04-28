@@ -22,7 +22,22 @@ export interface CheckinConfig {
   features?: {
     akustik?: boolean
   }
+  /**
+   * Legacy: Hex-Override aus tenants.settings.checkin.primary_color.
+   * Wenn gesetzt, gewinnt das ueber brand_color (Backwards-Compat fuer
+   * Bestandskunden die bereits einen eigenen Hex-Wert konfiguriert haben).
+   */
   primary_color: string | null
+  /**
+   * Welle 9 (2026-04-28): Tenant-Markenfarbe als HSL-Triplet aus tenant_theme.
+   * Optional fuer Rueckwaertskompatibilitaet mit aelteren Backend-Versionen
+   * der checkin-config Edge-Function.
+   */
+  brand_color?: {
+    h: number
+    s: number
+    l: number
+  }
   submit_url: string
   submit_token: string
   token_expires_at: number

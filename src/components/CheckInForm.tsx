@@ -156,8 +156,18 @@ const CheckInForm = () => {
   if (isSuccess) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-20 space-y-6">
-        <div className="w-20 h-20 rounded-full bg-[#39E078]/20 flex items-center justify-center mb-4">
-          <svg className="w-10 h-10 text-[#39E078]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <div
+          className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
+          style={{ background: 'hsl(var(--brand-h) var(--brand-s) var(--brand-l) / 0.2)' }}
+        >
+          <svg
+            className="w-10 h-10"
+            style={{ color: 'hsl(var(--brand-h) var(--brand-s) var(--brand-l))' }}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>

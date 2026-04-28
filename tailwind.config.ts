@@ -52,8 +52,10 @@ export default {
         },
         aurora: {
           dark: "#020B0F",
-          glow: "#39E078",
-          "glow-soft": "#2BC462",
+          // Welle 9 (2026-04-28): Markenfarbe via CSS-Variablen aus index.css.
+          // glow / glow-soft folgen jetzt --brand-h/-s/-l.
+          glow: "hsl(var(--brand-h) var(--brand-s) var(--brand-l))",
+          "glow-soft": "hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 8%))",
           glass: "hsl(192, 50%, 8%)",
           muted: "hsl(192, 10%, 55%)",
         },
