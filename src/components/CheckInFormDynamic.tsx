@@ -11,8 +11,8 @@ import { CONSENT_TEXTS, hashConsentText } from "@/lib/consent-texts";
 import { calculateAge } from "@/lib/age";
 
 // Hobby-Kategorien (seit 2026-04-15: v2 Payload-Schema)
-// Motorradfahren ist NEU.
-const HOBBY_SPORT = ["Radfahren", "Motorradfahren", "Wandern", "Joggen", "Anderer Sport"];
+// Motorradfahren neu seit 2026-04, Golfen seit 2026-05.
+const HOBBY_SPORT = ["Radfahren", "Motorradfahren", "Golfen", "Wandern", "Joggen", "Anderer Sport"];
 const HOBBY_NAHARBEIT = ["Lesen", "Modellbau", "Puzzle"];
 const HOBBY_OUTDOOR = ["Gartenarbeit"];
 const HOBBY_OPTIONS_ALL = [...HOBBY_SPORT, ...HOBBY_NAHARBEIT, ...HOBBY_OUTDOOR];
@@ -22,7 +22,18 @@ const BESCHWERDE_OPTIONS = [
   "Nichts davon",
 ];
 
+// Anrede — Pflichtfeld auf der Check-in-Seite. UI-Label "Sonstiges",
+// DB-Wert "divers" (CHECK-Constraint kunden.anrede aus Mig 011).
+const ANREDE_OPTIONS: { value: "herr" | "frau" | "divers"; label: string }[] = [
+  { value: "herr",   label: "Herr" },
+  { value: "frau",   label: "Frau" },
+  { value: "divers", label: "Sonstiges" },
+];
+
 const checkInSchema = z.object({
+  anrede: z.enum(["herr", "frau", "divers"], {
+    errorMap: () => ({ message: "Bitte waehle eine Anrede aus" }),
+  }),
   vorname: z.string().trim().min(1, "Vorname ist erforderlich").max(50),
   nachname: z.string().trim().min(1, "Nachname ist erforderlich").max(50),
   geburtsdatum: z.string().min(1, "Geburtsdatum ist erforderlich"),
@@ -56,6 +67,7 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
   }, [isSuccess]);
 
   const [formData, setFormData] = useState({
+    anrede: "" as "" | "herr" | "frau" | "divers",
     vorname: "",
     nachname: "",
     geburtsdatum: "",
@@ -143,6 +155,7 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
 
       const payload: Record<string, unknown> = {
         _schema: 2,
+        anrede: result.data.anrede,
         vorname: result.data.vorname,
         nachname: result.data.nachname,
         geburtsdatum: result.data.geburtsdatum,
@@ -167,6 +180,7 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
       await onSubmit(payload);
       setIsSuccess(true);
       setFormData({
+        anrede: "",
         vorname: "",
         nachname: "",
         geburtsdatum: "",
@@ -225,6 +239,34 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Anrede — Pflichtfeld, vor dem Namen. UI-Label "Sonstiges" -> DB "divers" */}
+      <div className="space-y-4">
+        <label className="form-label">
+          Anrede <span className="form-label-required">*</span>
+        </label>
+        <div className="grid grid-cols-3 gap-4">
+          {ANREDE_OPTIONS.map((opt) => {
+            const active = formData.anrede === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleInputChange("anrede", opt.value)}
+                className={`aurora-card flex-1 ${active ? 'active' : ''}`}
+              >
+                <span
+                  className={`text-sm font-medium tracking-wide transition-all duration-300 ${
+                    active ? 'text-white' : 'text-white/50'
+                  }`}
+                >
+                  {opt.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Name Fields */}
       <div className="grid grid-cols-2 gap-5">
         <GlassInput
