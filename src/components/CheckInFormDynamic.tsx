@@ -38,7 +38,10 @@ const checkInSchema = z.object({
   nachname: z.string().trim().min(1, "Nachname ist erforderlich").max(50),
   geburtsdatum: z.string().min(1, "Geburtsdatum ist erforderlich"),
   handy: z.string().trim().min(1, "Handynummer ist erforderlich").max(20),
-  email: z.string().trim().email("Ungültige E-Mail-Adresse").max(100),
+  // F-06 (2026-05-30): email ist nur Pflicht wenn email_nicht_vorhanden = false.
+  // Reine Laenge/Format-Pruefung hier, die bedingte Pflicht via superRefine unten.
+  email: z.string().trim().max(100),
+  email_nicht_vorhanden: z.boolean(),
   sehhilfe: z.array(z.string()).min(1, "Bitte wähle deine Sehhilfe aus"),
   hobbys: z.array(z.string()),
   bildschirmzeit: z.number().min(0).max(16),
@@ -46,6 +49,20 @@ const checkInSchema = z.object({
   gruppen_gespraeche: z.boolean().optional(),
   datenschutz: z.boolean(),
   erinnerung: z.boolean(),
+}).superRefine((data, ctx) => {
+  // F-06 (2026-05-30): "Keine E-Mail vorhanden"-Logik. Wenn das Flag NICHT
+  // gesetzt ist, muss eine gueltige E-Mail vorliegen. Wenn gesetzt, ist das
+  // Feld egal (Backend checkin-submit erwartet email_nicht_vorhanden + leere email).
+  if (!data.email_nicht_vorhanden) {
+    const emailCheck = z.string().email().safeParse(data.email);
+    if (!emailCheck.success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["email"],
+        message: "Ungültige E-Mail-Adresse (oder 'Keine E-Mail' ankreuzen)",
+      });
+    }
+  }
 });
 
 interface Props {
@@ -73,6 +90,7 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
     geburtsdatum: "",
     handy: "+49 ",
     email: "",
+    email_nicht_vorhanden: false,
     sehhilfe: [] as string[],
     hobbys: [] as string[],
     bildschirmzeit: 10,
@@ -160,7 +178,11 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         nachname: result.data.nachname,
         geburtsdatum: result.data.geburtsdatum,
         handy: result.data.handy,
-        email: result.data.email,
+        // F-06 (2026-05-30): bei "Keine E-Mail vorhanden" leere email + Flag senden.
+        // checkin-submit normalisiert email_nicht_vorhanden===true und setzt
+        // kunden.email auf NULL (Edge Function index.ts:403-425).
+        email: result.data.email_nicht_vorhanden ? "" : result.data.email,
+        email_nicht_vorhanden: result.data.email_nicht_vorhanden,
         sehhilfe: sehhilfeObj,
         hobbys: hobbysObj,
         bildschirmzeit: result.data.bildschirmzeit,
@@ -186,6 +208,7 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         geburtsdatum: "",
         handy: "+49 ",
         email: "",
+        email_nicht_vorhanden: false,
         sehhilfe: [],
         hobbys: [],
         bildschirmzeit: 10,
@@ -297,12 +320,33 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         required
       />
 
-      <GlassInput
-        id="email" label="E-Mail" type="email" placeholder="max@beispiel.de"
-        value={formData.email}
-        onChange={(e) => handleInputChange("email", e.target.value)}
-        required
-      />
+      {/* F-06 (2026-05-30): E-Mail mit "Keine E-Mail vorhanden"-Option.
+          Bei aktivierter Checkbox wird das Feld disabled + leert sich, und
+          email_nicht_vorhanden=true geht an checkin-submit (Backend leert email
+          + setzt Flag). Erinnerungs-Versand filtert solche Kunden raus. */}
+      <div className="space-y-3">
+        <GlassInput
+          id="email" label="E-Mail" type="email"
+          placeholder={formData.email_nicht_vorhanden ? "— Keine E-Mail vorhanden —" : "max@beispiel.de"}
+          value={formData.email}
+          onChange={(e) => handleInputChange("email", e.target.value)}
+          disabled={formData.email_nicht_vorhanden}
+          required={!formData.email_nicht_vorhanden}
+        />
+        <AuroraCheckbox
+          id="email_nicht_vorhanden"
+          checked={formData.email_nicht_vorhanden}
+          onChange={(checked) => {
+            setFormData((prev) => ({
+              ...prev,
+              email_nicht_vorhanden: checked,
+              // Bei Aktivierung E-Mail-Feld leeren (Backend erwartet leere email)
+              email: checked ? "" : prev.email,
+            }));
+          }}
+          label="Keine E-Mail-Adresse vorhanden"
+        />
+      </div>
 
       {/* Sehhilfe — 2026-04-15: "Keine" entfernt, "Sonnenbrille ohne Stärke" neu */}
       <div className="space-y-4 pt-2">
