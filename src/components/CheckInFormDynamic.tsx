@@ -30,6 +30,18 @@ const ANREDE_OPTIONS: { value: "herr" | "frau" | "divers"; label: string }[] = [
   { value: "divers", label: "Sonstiges" },
 ];
 
+// Marketing-Attribution (2026-07): "Wie sind Sie auf uns aufmerksam geworden?".
+// Werte deckungsgleich mit Backend (Mig 616 CHECK + checkin-submit Whitelist +
+// CHECKIN_MARKETING_QUELLE_WERTE in @aurora-v2/shared).
+const MARKETING_QUELLE_OPTIONS: { value: "empfehlung" | "suchmaschine" | "social_media" | "radio" | "zeitung_flyer" | "keine_angabe"; label: string }[] = [
+  { value: "empfehlung",    label: "Empfehlung (Freunde, Bekannte, Partner)" },
+  { value: "suchmaschine",  label: "Suchmaschine (z. B. Google)" },
+  { value: "social_media",  label: "Instagram / Soziale Medien" },
+  { value: "radio",         label: "Radio / Audio-Werbung" },
+  { value: "zeitung_flyer", label: "Zeitung / Zeitschrift / Flyer" },
+  { value: "keine_angabe",  label: "Keine Angabe" },
+];
+
 const checkInSchema = z.object({
   anrede: z.enum(["herr", "frau", "divers"], {
     errorMap: () => ({ message: "Bitte waehle eine Anrede aus" }),
@@ -47,6 +59,9 @@ const checkInSchema = z.object({
   bildschirmzeit: z.number().min(0).max(16),
   beschwerden: z.array(z.string()),
   gruppen_gespraeche: z.boolean().optional(),
+  // Marketing-Attribution (2026-07): "Wie sind Sie auf uns aufmerksam geworden?".
+  // Optional — leerer String = keine Auswahl (wird nicht gesendet).
+  marketing_quelle: z.enum(['empfehlung', 'suchmaschine', 'social_media', 'radio', 'zeitung_flyer', 'keine_angabe']).or(z.literal('')).optional(),
   datenschutz: z.boolean(),
   erinnerung: z.boolean(),
 }).superRefine((data, ctx) => {
@@ -96,6 +111,7 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
     bildschirmzeit: 10,
     beschwerden: [] as string[],
     gruppen_gespraeche: false,
+    marketing_quelle: "" as "" | "empfehlung" | "suchmaschine" | "social_media" | "radio" | "zeitung_flyer" | "keine_angabe",
     datenschutz: false,
     erinnerung: true,
   });
@@ -199,6 +215,12 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         };
       }
 
+      // Marketing-Attribution (2026-07): nur senden wenn der Kunde etwas ausgewaehlt
+      // hat. Leerer String -> Feld weglassen (Backend speichert dann NULL).
+      if (result.data.marketing_quelle) {
+        payload.marketing_quelle = result.data.marketing_quelle;
+      }
+
       await onSubmit(payload);
       setIsSuccess(true);
       setFormData({
@@ -214,6 +236,7 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         bildschirmzeit: 10,
         beschwerden: [],
         gruppen_gespraeche: false,
+        marketing_quelle: "",
         datenschutz: false,
         erinnerung: false,
       });
@@ -408,6 +431,35 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
             onChange={(checked) => handleInputChange("gruppen_gespraeche", checked)}
             label="Ich habe manchmal Probleme bei Gesprächen in Gruppen."
           />
+        </div>
+      )}
+
+      {/* Marketing-Attribution (2026-07): "Wie sind Sie auf uns aufmerksam geworden?".
+          Optionales Auswahlfeld am Flow-Ende, nur wenn im Backend aktiviert
+          (config.fields.marketing_quelle, standardmaessig an). */}
+      {config.fields.marketing_quelle && (
+        <div className="space-y-3 pt-2">
+          <label className="form-label">Wie sind Sie auf uns aufmerksam geworden?</label>
+          <div className="grid gap-2">
+            {MARKETING_QUELLE_OPTIONS.map((opt) => {
+              const aktiv = formData.marketing_quelle === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleInputChange("marketing_quelle", aktiv ? "" : opt.value)}
+                  aria-pressed={aktiv}
+                  className={`min-h-12 rounded-xl border px-4 py-3 text-left text-base transition-colors ${
+                    aktiv
+                      ? "border-aurora-glow bg-aurora-glow/15 text-white"
+                      : "border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

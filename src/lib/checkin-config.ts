@@ -13,6 +13,9 @@ export interface CheckinConfig {
     hobbys: boolean
     beschwerden: boolean
     bildschirmzeit: boolean
+    // Marketing-Attribution (2026-07). Optional fuer Rueckwaertskompatibilitaet
+    // mit aelteren Backend-Versionen der checkin-config Edge-Function.
+    marketing_quelle?: boolean
   }
   /**
    * Tenant-Feature-Flags die das Formular beeinflussen.
