@@ -1,7 +1,9 @@
-import { Glasses, Eye, Sun } from "lucide-react";
+import { Glasses, Eye, EyeOff, Sun } from "lucide-react";
 
 interface SehhilfeCardProps {
-  type: "brille" | "kontaktlinsen" | "sonnenbrille_ohne_staerke";
+  // "keine" wird nur vom Legacy-Formular (CheckInForm.tsx / AKZ-Legacy-Modus) genutzt;
+  // die aktive Komponente CheckInFormDynamic.tsx verwendet "sonnenbrille_ohne_staerke".
+  type: "brille" | "kontaktlinsen" | "sonnenbrille_ohne_staerke" | "keine";
   label: string;
   active: boolean;
   onClick: () => void;
@@ -12,6 +14,7 @@ const SehhilfeCard = ({ type, label, active, onClick }: SehhilfeCardProps) => {
     brille: Glasses,
     kontaktlinsen: Eye,
     sonnenbrille_ohne_staerke: Sun,
+    keine: EyeOff,
   };
 
   const Icon = icons[type];

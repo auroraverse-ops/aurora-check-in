@@ -2,6 +2,8 @@
 // Lädt Tenant-spezifisches Branding + Submit-Token von der checkin-config Edge Function.
 // Fallback: VITE_STANDORT + VITE_N8N_WEBHOOK_URL (für AKZ-Legacy-Standorte).
 
+import { safeRandomUUID } from './crypto-safe'
+
 export interface CheckinConfig {
   tenant_name: string
   tenant_slug: string
@@ -66,7 +68,10 @@ export async function submitCheckin(
   submitToken: string,
   data: Record<string, unknown>
 ): Promise<{ kunde_id: string; checkin_id: string; is_new_customer: boolean }> {
-  const requestId = crypto.randomUUID()
+  // safeRandomUUID statt crypto.randomUUID(): letzteres crasht auf iOS Safari <15.4
+  // bzw. im Non-Secure-Context (HTTP-Messe-Tablet). request_id dient nur der
+  // Idempotenz — kein Sicherheitswert, Fallbacks daher unbedenklich.
+  const requestId = safeRandomUUID()
 
   const res = await fetch(submitUrl, {
     method: 'POST',
