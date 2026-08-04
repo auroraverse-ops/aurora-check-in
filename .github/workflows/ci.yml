@@ -1,0 +1,48 @@
+name: CI
+
+# Basis-Gate fuer aurora-check-in.
+# Angelegt 2026-08-04 nach der Gate-Bestandsaufnahme: das Repo war aktiv,
+# hatte aber keinen einzigen CI-Lauf — ein fehlerhafter Push waere ohne
+# jede Warnung durchgegangen. Die Skripte (lint/test/build) existierten
+# bereits, sie wurden nur nie aufgerufen.
+#
+# Muster angelehnt an aski-foundation/.github/workflows/ci.yml.
+# Kein separater typecheck-Schritt noetig: das build-Skript ist
+# `tsc -b && vite build`, die Typpruefung laeuft also im Build mit.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  quality-gate:
+    name: Lint + Test + Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Lint ist vorerst NICHT blockierend: Stand 2026-08-04 meldet eslint
+      # 3 Fehler + 7 Warnungen aus dem Bestand (u.a. require()-Import in
+      # tailwind.config.ts). Ein Gate, das am ersten Tag rot ist, wird
+      # ignoriert — deshalb erst sichtbar machen, dann aufraeumen, dann
+      # dieses continue-on-error entfernen.
+      - name: Lint (eslint, noch nicht blockierend)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Test (vitest)
+        run: npm run test
+
+      - name: Build (tsc -b + vite build)
+        run: npm run build
