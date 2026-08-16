@@ -101,7 +101,19 @@ const Privacy = () => {
               <h2 className="text-lg font-semibold text-white mb-2">3. Empfänger/Kategorien von Empfängern</h2>
               <ul className="list-disc list-inside space-y-1">
                 <li>Interne Stellen (Beratung, Verkauf, Werkstatt).</li>
-                <li>IT-/Hosting-Dienstleister als Auftragsverarbeiter (z. B. Rechenzentrum/Branchensoftware) – verarbeiten ausschließlich nach Weisung; Verträge nach Art. 28 DSGVO bestehen.</li>
+                {/* Konkretisiert 16.08.2026: Hier stand nur "IT-/Hosting-Dienstleister".
+                    Bei Art.-9-Gesundheitsdaten gehoert der Auftragsverarbeiter benannt —
+                    Betroffene muessen wissen, WER ihre Daten technisch verarbeitet. */}
+                <li>
+                  <strong className="text-white/90">ASKI Tech GmbH</strong>, Poststr. 11, 88239 Wangen im Allgäu –
+                  Betreiberin der Check-in- und Praxissoftware (Aurora) als Auftragsverarbeiter nach Art. 28 DSGVO;
+                  verarbeitet ausschließlich nach unserer Weisung.
+                </li>
+                <li>
+                  <strong className="text-white/90">Hetzner Online GmbH</strong>, Gunzenhausen – Serverbetrieb,
+                  Standort Deutschland; Unterauftragsverarbeiter mit Vertrag nach Art. 28 DSGVO.
+                </li>
+                <li>Weitere IT-Dienstleister (z. B. Branchensoftware) als Auftragsverarbeiter – ausschließlich nach Weisung; Verträge nach Art. 28 DSGVO bestehen.</li>
                 <li>Weitere Empfänger nur, wenn erforderlich/rechtlich geboten (z. B. Steuerberater/Finanzbehörden im Rahmen von Aufbewahrungs-/Nachweispflichten).</li>
               </ul>
               <p className="mt-2">
@@ -128,9 +140,17 @@ const Privacy = () => {
 
             {/* 6. Cookies */}
             <section>
-              <h2 className="text-lg font-semibold text-white mb-2">6. Cookies/Online-Technologien (Landing-Page)</h2>
+              {/* Korrigiert 16.08.2026: Der Absatz verwies auf eine "Website-Datenschutzerklaerung",
+                  die es nicht gibt, und beschrieb ein Consent-Banner fuer Tracker, die hier gar
+                  nicht laufen (geprueft: kein Umami, kein Analytics, kein Consent-Banner im Code).
+                  Eine Erklaerung darf nicht beschreiben, was nicht passiert. */}
+              <h2 className="text-lg font-semibold text-white mb-2">6. Cookies und Reichweitenmessung</h2>
               <p>
-                Sofern auf der Landing-Page Cookies/Tracker eingesetzt werden, die nicht unbedingt erforderlich sind, holen wir vor Setzung Ihre Einwilligung nach § 25 TTDSG (Consent-Banner) ein; Details inkl. Anbieterliste und Speicherdauern finden Sie in der Website-Datenschutzerklärung. Essenzielle Cookies beruhen auf berechtigtem Interesse (Art. 6 Abs. 1 lit. f DSGVO).
+                Diese Check-in-Anwendung setzt <strong className="text-white/90">keine Analyse-,
+                Tracking- oder Werbe-Cookies</strong> ein und führt keine Reichweitenmessung durch.
+                Es werden ausschließlich technisch notwendige Daten verarbeitet, die für den
+                Betrieb der Anwendung erforderlich sind (Art. 6 Abs. 1 lit. f DSGVO). Ein
+                Einwilligungsbanner ist daher nicht erforderlich.
               </p>
             </section>
 
