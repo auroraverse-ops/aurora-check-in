@@ -71,3 +71,23 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Source-owned Release-Komponentenmanifest
+
+Das Repository liefert seinen Releasevertrag selbst. Der deklarative Vertrag
+liegt unter `release/component-manifest.contract.json`; der versionierte
+Exporter unter `tools/export-release-manifest.mjs`.
+
+```sh
+npm run check:release-manifest-contract
+npm run release:manifest
+npm run release:manifest:check
+```
+
+Der Export verlangt einen sauberen Git-Checkout und schreibt deterministisch
+nach `.release-artifacts/component-manifest.json`. Dieser Pfad ist absichtlich
+ignoriert: Das Artefakt bindet den bereits existierenden Commit und vermeidet
+so eine zirkulaere Commit-SHA. Es enthaelt nur sanitiserte Vertragsmetadaten,
+Claim-IDs und Digests. Build-, Edge- und Deploymentnachweise bleiben separate,
+attestierte Release-Evidence; der Exporter fuehrt weder Netzwerkzugriffe noch
+Deployments aus.

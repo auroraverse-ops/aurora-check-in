@@ -1,0 +1,86 @@
+{
+  "schema": "aurora-check-in-release-producer-contract",
+  "schema_version": 1,
+  "unit": "aurora-check-in",
+  "api_contract_version": "checkin-config-submit-v1",
+  "build_command": "npm run build",
+  "test_command": "npm run test",
+  "affected_claim_ids": [
+    "RISK-CHECKIN-CONFIG-PUBLIC-SANITIZED",
+    "RISK-CHECKIN-HMAC-REPLAY-ONCE",
+    "RISK-CHECKIN-IP-POLICY-ENFORCED",
+    "RISK-CHECKIN-MUTATION-IDEMPOTENT",
+    "RISK-CHECKIN-SUBMIT-AUTH-REPLAY-BOUND",
+    "RISK-SURFACE-CHECKIN-EVIDENCE-COMPLETE",
+    "RISK-SURFACE-CHECKIN-INVENTORY-COMPLETE"
+  ],
+  "expected_contracts": {
+    "routes": [
+      "*",
+      "/",
+      "/:tenant",
+      "/:tenant/:filiale",
+      "/privacy"
+    ],
+    "environment_interfaces": [
+      "VITE_N8N_WEBHOOK_URL",
+      "VITE_STANDORT",
+      "VITE_SUPABASE_URL"
+    ],
+    "edge_function_paths": [
+      "checkin-config"
+    ],
+    "request_headers": [
+      "Content-Type",
+      "X-Checkin-Token"
+    ],
+    "form_schema_fields": [
+      "anrede",
+      "beschwerden",
+      "bildschirmzeit",
+      "datenschutz",
+      "email",
+      "email_nicht_vorhanden",
+      "erinnerung",
+      "geburtsdatum",
+      "gruppen_gespraeche",
+      "handy",
+      "hobbys",
+      "marketing_quelle",
+      "nachname",
+      "sehhilfe",
+      "vorname"
+    ],
+    "contract_signals": [
+      "checkin_token_header",
+      "consent_hash_unavailable_sentinel",
+      "idempotency_request_id",
+      "legacy_direct_webhook_interface",
+      "runtime_submit_url_contract",
+      "sha256_consent_or_integrity"
+    ],
+    "consent_contracts": [
+      {
+        "key": "datenschutz",
+        "version": "v1",
+        "text_sha256": "655765b63dcf52d94d56c5147755803e26697507b61c8306dec0be7de2ae6d34"
+      },
+      {
+        "key": "recall",
+        "version": "v1",
+        "text_sha256": "a1817cfc590d9bfbc1098484ccaada955c5e916684983a2a926eb354d0d39b11"
+      }
+    ]
+  },
+  "release_requirements": {
+    "clean_repository_required": true,
+    "build_evidence_required": true,
+    "test_evidence_required": true,
+    "skips_must_be_empty": true,
+    "artifact_digest_required": true,
+    "evidence_timestamp_required": true,
+    "edge_revision_required": true,
+    "deployment_digest_required": true,
+    "deployment_attestation_required": true
+  }
+}

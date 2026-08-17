@@ -44,5 +44,8 @@ jobs:
       - name: Test (vitest)
         run: npm run test
 
+      - name: Release-Manifest-Vertrag validieren
+        run: npm run check:release-manifest-contract
+
       - name: Build (tsc -b + vite build)
         run: npm run build
