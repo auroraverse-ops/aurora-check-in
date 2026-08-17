@@ -10,7 +10,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:release-manifest-contract": "node tools/export-release-manifest.mjs --validate-contract",
+    "release:manifest": "node tools/export-release-manifest.mjs --output .release-artifacts/component-manifest.json",
+    "release:manifest:check": "node tools/export-release-manifest.mjs --check --output .release-artifacts/component-manifest.json"
   },
   "dependencies": {
     "@fontsource/outfit": "^5.2.8",
