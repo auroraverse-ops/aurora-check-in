@@ -4,7 +4,7 @@ import crypto from 'node:crypto'
 const ROLE = 'checkin_ci'
 const REPOSITORY = 'auroraverse-ops/aurora-check-in'
 const KEY_ID = 'KEY-CHECKIN-CI-EVIDENCE-01'
-const ENVIRONMENT = 'risk-v2-evidence'
+const ENVIRONMENT = 'repository-secret-pinned-main-workflow'
 const SECRET_NAME = 'RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64'
 const WORKFLOW_REF = `${REPOSITORY}/.github/workflows/risk-v2-ci-key-challenge.yml@refs/heads/main`
 const HEX_64 = /^[a-f0-9]{64}$/
