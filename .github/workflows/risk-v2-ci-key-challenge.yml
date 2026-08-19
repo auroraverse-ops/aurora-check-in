@@ -16,7 +16,7 @@ on:
         required: true
         type: string
       secret_name:
-        description: Exact enrollment-versioned GitHub Environment secret name
+        description: Exact enrollment-versioned GitHub Repository secret name
         required: true
         type: string
       execution_plan_sha256:
@@ -39,7 +39,7 @@ jobs:
   prevalidate:
     runs-on: ubuntu-latest
     steps:
-      - name: Fail closed before protected-environment approval
+      - name: Fail closed before repository-secret use
         shell: bash
         env:
           EXPECTED_REPOSITORY: auroraverse-ops/aurora-check-in
@@ -83,7 +83,6 @@ jobs:
   sign-challenge:
     needs: prevalidate
     runs-on: ubuntu-latest
-    environment: risk-v2-evidence
     steps:
       - name: Checkout exact workflow commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
