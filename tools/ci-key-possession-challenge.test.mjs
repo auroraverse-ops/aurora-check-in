@@ -55,7 +55,7 @@ test('interoperates with the canonical repository-bound Ed25519 statement', () =
   assert.deepEqual({ role: payload.statement.role, repository: payload.statement.repository,
     environment: payload.statement.environment, key_id: payload.statement.key_id },
   { role: 'checkin_ci', repository: 'auroraverse-ops/aurora-check-in',
-    environment: 'risk-v2-evidence', key_id: 'KEY-CHECKIN-CI-EVIDENCE-01' })
+    environment: 'repository-secret-pinned-main-workflow', key_id: 'KEY-CHECKIN-CI-EVIDENCE-01' })
   const statement = Object.fromEntries(Object.entries(payload.statement).filter(([key]) => key !== 'statement_sha256'))
   assert.equal(payload.statement.statement_sha256, sha256(JSON.stringify(canonical(statement))))
   assert.deepEqual(Object.keys(payload.response), ['statement_sha256', 'signature_base64'])
