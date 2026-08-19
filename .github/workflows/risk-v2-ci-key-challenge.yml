@@ -1,0 +1,117 @@
+name: Risk v2 CI key possession challenge
+
+on:
+  workflow_dispatch:
+    inputs:
+      challenge_sha256:
+        description: One-time 64-character lowercase SHA-256 challenge
+        required: true
+        type: string
+      public_key_sha256:
+        description: Expected SPKI PEM SHA-256 digest
+        required: true
+        type: string
+      enrollment_id:
+        description: Trust-enrollment identifier as 64-character lowercase SHA-256
+        required: true
+        type: string
+      secret_name:
+        description: Exact enrollment-versioned GitHub Environment secret name
+        required: true
+        type: string
+      execution_plan_sha256:
+        description: Bound enrollment execution-plan SHA-256
+        required: true
+        type: string
+      source_ref:
+        description: Evidence-branch ref whose candidate source is being bound
+        required: true
+        type: string
+      source_sha:
+        description: Full 40-character candidate source commit SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prevalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail closed before protected-environment approval
+        shell: bash
+        env:
+          EXPECTED_REPOSITORY: auroraverse-ops/aurora-check-in
+          CHALLENGE_SHA256: ${{ inputs.challenge_sha256 }}
+          PUBLIC_KEY_SHA256: ${{ inputs.public_key_sha256 }}
+          ENROLLMENT_ID: ${{ inputs.enrollment_id }}
+          SECRET_NAME: ${{ inputs.secret_name }}
+          EXECUTION_PLAN_SHA256: ${{ inputs.execution_plan_sha256 }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+          CURRENT_REF: ${{ github.ref }}
+          CURRENT_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          ACTOR_ID: ${{ github.actor_id }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          [[ "$CHALLENGE_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          [[ "$PUBLIC_KEY_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          [[ "$ENROLLMENT_ID" =~ ^[a-f0-9]{64}$ ]]
+          EXPECTED_SECRET_NAME="RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64_${ENROLLMENT_ID^^}"
+          [[ "$SECRET_NAME" == "$EXPECTED_SECRET_NAME" ]]
+          [[ "$EXECUTION_PLAN_SHA256" =~ ^[a-f0-9]{64}$ ]]
+          [[ "$SOURCE_REF" =~ ^refs/heads/evidence/[A-Za-z0-9]([A-Za-z0-9._/-]{0,198}[A-Za-z0-9])?$ ]]
+          [[ "$SOURCE_REF" != *..* && "$SOURCE_REF" != *//* ]]
+          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$CURRENT_REF" == refs/heads/main ]]
+          [[ "$WORKFLOW_SHA" =~ ^[a-f0-9]{40}$ && "$CURRENT_SHA" == "$WORKFLOW_SHA" ]]
+          [[ "$REPOSITORY" == "$EXPECTED_REPOSITORY" ]]
+          [[ "$WORKFLOW_REF" == "$EXPECTED_REPOSITORY/.github/workflows/risk-v2-ci-key-challenge.yml@refs/heads/main" ]]
+          [[ "$REPOSITORY_ID" =~ ^[1-9][0-9]{0,19}$ ]]
+          [[ "$ACTOR_ID" =~ ^[1-9][0-9]{0,19}$ ]]
+          [[ "$TRIGGERING_ACTOR" =~ ^[A-Za-z0-9-]{1,39}$ ]]
+          [[ "$RUN_ID" =~ ^[1-9][0-9]{0,19}$ && "$RUN_ATTEMPT" =~ ^[1-9][0-9]{0,19}$ ]]
+
+  sign-challenge:
+    needs: prevalidate
+    runs-on: ubuntu-latest
+    environment: risk-v2-evidence
+    steps:
+      - name: Checkout exact workflow commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify immutable workflow checkout
+        shell: bash
+        env:
+          EXPECTED_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_WORKFLOW_SHA"
+          test "$GITHUB_SHA" = "$EXPECTED_WORKFLOW_SHA"
+
+      - name: Sign repository-bound challenge
+        shell: bash
+        env:
+          CHALLENGE_SHA256: ${{ inputs.challenge_sha256 }}
+          PUBLIC_KEY_SHA256: ${{ inputs.public_key_sha256 }}
+          ENROLLMENT_ID: ${{ inputs.enrollment_id }}
+          EXECUTION_PLAN_SHA256: ${{ inputs.execution_plan_sha256 }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64: ${{ secrets[inputs.secret_name] }}
+        run: |
+          set -euo pipefail
+          response="$(node tools/sign-ci-key-possession-challenge.mjs)"
+          printf 'CI_KEY_POSSESSION_RESPONSE=%s\n' "$response"
