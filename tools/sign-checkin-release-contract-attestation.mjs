@@ -16,14 +16,13 @@ const exact = (value, keys) => value && Object.getPrototypeOf(value) === Object.
 const utc = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
   && new Date(value).toISOString() === value
 
-const TOP = ['schema_version', 'attestation_id', 'unit', 'source', 'target', 'api_contract_version', 'edge', 'deployment', 'evidence_ids', 'timing', 'attestation']
+const BODY = ['schema_version', 'attestation_id', 'unit', 'source', 'target', 'api_contract_version', 'edge', 'deployment', 'evidence_ids', 'timing']
 const SOURCE = ['repository', 'commit_sha', 'tree_sha', 'manifest_sha256']
 const TARGET = ['environment', 'target_id', 'environment_fingerprint_sha256']
 const EDGE = ['functions', 'aggregate_sha256']
 const FUNCTION = ['id', 'revision_sha256']
 const DEPLOYMENT = ['revision_sha256', 'deployment_digest_sha256']
 const TIMING = ['observed_at', 'valid_until']
-const ATTESTATION = ['kind', 'subject', 'authorization_ref', 'key_id', 'statement_sha256', 'signature_base64']
 
 export function computeCheckinContractStatementSha256(document) {
   const { attestation, ...body } = document
@@ -32,7 +31,7 @@ export function computeCheckinContractStatementSha256(document) {
 }
 
 function validate(document, context) {
-  if (!exact(document, TOP) || document.schema_version !== 1 || document.unit !== 'aurora-check-in'
+  if (!exact(document, BODY) || document.schema_version !== 1 || document.unit !== 'aurora-check-in'
     || !/^ATT-CHECKIN-[A-Z0-9][A-Z0-9-]{5,99}$/.test(document.attestation_id ?? '')) throw new Error('contract_identity_invalid')
   if (!exact(document.source, SOURCE) || document.source.repository !== 'aurora-check-in'
     || document.source.commit_sha !== context.sourceSha || document.source.tree_sha !== context.sourceTreeSha
@@ -52,10 +51,6 @@ function validate(document, context) {
     || Date.parse(document.timing.valid_until) <= Date.parse(document.timing.observed_at)
     || Date.parse(document.timing.observed_at) > Date.now() + 5_000 || Date.parse(document.timing.valid_until) < Date.now()
     || Date.parse(document.timing.valid_until) > Date.now() + 86_405_000) throw new Error('timing_invalid')
-  if (!exact(document.attestation, ATTESTATION) || document.attestation.kind !== 'external_signed_manifest'
-    || document.attestation.subject !== context.subject || document.attestation.authorization_ref !== context.authorizationRef
-    || document.attestation.key_id !== context.keyId || document.attestation.statement_sha256 !== '0'.repeat(64)
-    || document.attestation.signature_base64 !== 'AA==') throw new Error('attestation_template_invalid')
 }
 
 export function signCheckinReleaseContractAttestation({ document, privateKeyPkcs8Base64, context, outputDir }) {
@@ -65,7 +60,8 @@ export function signCheckinReleaseContractAttestation({ document, privateKeyPkcs
   if (privateKey.asymmetricKeyType !== 'ed25519') throw new Error('private_key_not_ed25519')
   const publicPem = Buffer.from(crypto.createPublicKey(privateKey).export({ format: 'pem', type: 'spki' }))
   if (sha256(publicPem) !== context.publicKeySha256) throw new Error('public_key_digest_mismatch')
-  const signed = structuredClone(document)
+  const signed = { ...structuredClone(document), attestation: { kind: 'external_signed_manifest', subject: context.subject,
+    authorization_ref: context.authorizationRef, key_id: context.keyId, statement_sha256: '0'.repeat(64), signature_base64: 'AA==' } }
   signed.attestation.statement_sha256 = computeCheckinContractStatementSha256(signed)
   signed.attestation.signature_base64 = crypto.sign(null, Buffer.from(signed.attestation.statement_sha256, 'hex'), privateKey).toString('base64')
   fs.mkdirSync(outputDir, { recursive: true })
@@ -85,13 +81,13 @@ function parse(name) {
   return value
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const secret = process.env.RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64
   delete process.env.RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64
   try {
     const config = parse('RISK_V2_SIGNER_CONFIG_BASE64')
     if (!exact(config, ['key_id', 'subject', 'authorization_ref', 'public_key_sha256']) || !HEX64.test(config.public_key_sha256)) throw new Error('signer_config_invalid')
-    const signed = signCheckinReleaseContractAttestation({ document: parse('RISK_V2_CHECKIN_CONTRACT_INPUT_BASE64'),
+    const signed = signCheckinReleaseContractAttestation({ document: parse('RISK_V2_CHECKIN_CONTRACT_BODY_BASE64'),
       privateKeyPkcs8Base64: secret, context: { ...config, sourceSha: process.env.RISK_V2_VERIFIED_SOURCE_SHA,
         sourceTreeSha: process.env.RISK_V2_VERIFIED_SOURCE_TREE_SHA }, outputDir: process.env.RISK_V2_OUTPUT_DIR })
     process.stdout.write(`CHECKIN_CONTRACT_ATTESTATION_SIGNED=${signed.attestation_id}\n`)
