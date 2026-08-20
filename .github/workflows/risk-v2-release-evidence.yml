@@ -1,0 +1,142 @@
+name: Risk v2 signed release evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      evidence_role:
+        description: Closed release evidence role
+        required: true
+        type: choice
+        options: [build, deployment, checkin_contract]
+      consumer_unit:
+        description: Empty except for consumer_build
+        required: false
+        type: string
+      source_ref:
+        description: Exact published source ref
+        required: true
+        type: string
+      source_sha:
+        description: Exact 40-character source commit
+        required: true
+        type: string
+      source_tree_sha:
+        description: Exact 40-character source tree
+        required: true
+        type: string
+      enrollment_id:
+        description: Exact live enrollment identifier
+        required: true
+        type: string
+      secret_name:
+        description: Exact enrollment-versioned repository secret
+        required: true
+        type: string
+      evidence_input_base64:
+        description: Canonical evidence template JSON
+        required: true
+        type: string
+      artifact_bundle_base64:
+        description: Canonical artifact bundle JSON
+        required: true
+        type: string
+      artifact_name:
+        description: Unique sanitized Actions artifact name
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prevalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail closed before repository-secret use
+        shell: bash
+        env:
+          ROLE: ${{ inputs.evidence_role }}
+          CONSUMER: ${{ inputs.consumer_unit }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_TREE_SHA: ${{ inputs.source_tree_sha }}
+          ENROLLMENT_ID: ${{ inputs.enrollment_id }}
+          SECRET_NAME: ${{ inputs.secret_name }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name }}
+          CURRENT_REF: ${{ github.ref }}
+          CURRENT_SHA: ${{ github.sha }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          [[ "$REPOSITORY" == "auroraverse-ops/aurora-check-in" ]]
+          [[ "$CURRENT_REF" == "refs/heads/main" && "$CURRENT_SHA" == "$WORKFLOW_SHA" ]]
+          [[ "$WORKFLOW_REF" == "auroraverse-ops/aurora-check-in/.github/workflows/risk-v2-release-evidence.yml@refs/heads/main" ]]
+          [[ "$ROLE" =~ ^(build|deployment|checkin_contract)$ ]]
+          [[ -z "$CONSUMER" ]]
+          [[ "$SOURCE_REF" =~ ^refs/heads/[A-Za-z0-9][A-Za-z0-9._/-]{0,198}$ && "$SOURCE_REF" != *..* && "$SOURCE_REF" != *//* ]]
+          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ && "$SOURCE_TREE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$ENROLLMENT_ID" =~ ^[a-f0-9]{64}$ ]]
+          [[ "$SECRET_NAME" == "RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64_${ENROLLMENT_ID^^}" ]]
+          [[ "$ARTIFACT_NAME" =~ ^risk-v2-release-evidence-[a-z0-9-]{3,80}$ ]]
+
+  sign:
+    needs: prevalidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact signer source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: signer
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Checkout and bind exact evidence source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: source
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify source ref, commit and tree
+        shell: bash
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_TREE_SHA: ${{ inputs.source_tree_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C source rev-parse 'HEAD^{tree}')" = "$SOURCE_TREE_SHA"
+          remote_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/${SOURCE_REF#refs/}" --jq .object.sha)"
+          test "$remote_sha" = "$SOURCE_SHA"
+
+      - name: Sign closed evidence and materialize exact artifacts
+        shell: bash
+        env:
+          RISK_V2_SIGNER_CONFIG_BASE64: eyJ1bml0IjoiYXVyb3JhLWNoZWNrLWluIiwicmVsZWFzZV91bml0IjoiYXVyb3JhLWNoZWNrLWluIiwiY29uc3VtZXJfcmVsZWFzZV91bml0IjpudWxsLCJrZXlfaWQiOiJLRVktQ0hFQ0tJTi1DSS1FVklERU5DRS0wMSIsInN1YmplY3QiOiJjaGVja2luLWNpLWV2aWRlbmNlLXNpZ25lciIsImF1dGhvcml6YXRpb25fcmVmIjoidHJ1c3QtZW5yb2xsbWVudDpjaGVja2luLWNpLWV2aWRlbmNlOjIwMjYtMDgtMTgiLCJwdWJsaWNfa2V5X3NoYTI1NiI6ImQxMjg2MWZlMzNiMjMwZDM5NWM0NGUwZDBhMzc3OGIzZTBmYzY5OThhNmIxMWViNWI0MjAzYzEwN2FlYmI2OWEiLCJhbGxvd2VkX3Njb3BlcyI6WyJldmlkZW5jZTphdXJvcmEtY2hlY2staW46YnVpbGQ6bG9jYWwiLCJldmlkZW5jZTphdXJvcmEtY2hlY2staW46ZGVwbG95bWVudDphdXJvcmEtdGVzdCIsImV2aWRlbmNlOmF1cm9yYS1jaGVjay1pbjpjaGVja2luX2NvbnRyYWN0OmF1cm9yYS10ZXN0Il19
+          RISK_V2_EVIDENCE_INPUT_BASE64: ${{ inputs.evidence_input_base64 }}
+          RISK_V2_ARTIFACT_BUNDLE_BASE64: ${{ inputs.artifact_bundle_base64 }}
+          RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64: ${{ secrets[inputs.secret_name] }}
+          RISK_V2_OUTPUT_DIR: ${{ runner.temp }}/risk-v2-release-evidence
+          RISK_V2_VERIFIED_SOURCE_REF: ${{ inputs.source_ref }}
+          RISK_V2_VERIFIED_SOURCE_SHA: ${{ inputs.source_sha }}
+          RISK_V2_VERIFIED_SOURCE_TREE_SHA: ${{ inputs.source_tree_sha }}
+          RISK_V2_RUNNER_ID: github-actions:auroraverse-ops/aurora-check-in
+          RISK_V2_EVIDENCE_ROLE: ${{ inputs.evidence_role }}
+          RISK_V2_CONSUMER_UNIT: ${{ inputs.consumer_unit }}
+        run: |
+          set -euo pipefail
+          node signer/tools/sign-risk-v2-release-evidence.mjs
+
+      - name: Upload exact signed evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ runner.temp }}/risk-v2-release-evidence
+          if-no-files-found: error
+          retention-days: 7
