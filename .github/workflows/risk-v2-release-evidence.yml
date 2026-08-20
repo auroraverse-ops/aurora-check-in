@@ -126,6 +126,7 @@ jobs:
           RISK_V2_VERIFIED_SOURCE_REF: ${{ inputs.source_ref }}
           RISK_V2_VERIFIED_SOURCE_SHA: ${{ inputs.source_sha }}
           RISK_V2_VERIFIED_SOURCE_TREE_SHA: ${{ inputs.source_tree_sha }}
+          RISK_V2_VERIFIED_RUN_ID: github-actions:${{ github.repository }}:${{ github.run_id }}:${{ github.run_attempt }}
           RISK_V2_RUNNER_ID: github-actions:auroraverse-ops/aurora-check-in
           RISK_V2_EVIDENCE_ROLE: ${{ inputs.evidence_role }}
           RISK_V2_CONSUMER_UNIT: ${{ inputs.consumer_unit }}

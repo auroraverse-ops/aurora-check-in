@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { computeCheckinContractStatementSha256, signCheckinReleaseContractAttestation } from '../../tools/sign-checkin-release-contract-attestation.mjs'
+import { bindVerifiedGithubRun } from '../../tools/sign-risk-v2-release-evidence.mjs'
 
 const roots = []
 afterEach(() => { for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true }) })
@@ -27,6 +28,13 @@ function fixture() {
 }
 
 describe('check-in release contract attestation signer', () => {
+  it('binds generic evidence only to the verified Actions run identity', () => {
+    const evidence = { run: { run_id: '__GITHUB_ACTIONS_RUN__' } }
+    const bound = bindVerifiedGithubRun(evidence, 'github-actions:auroraverse-ops/aurora-check-in:12345:1')
+    expect(bound.run.run_id).toBe('github-actions:auroraverse-ops/aurora-check-in:12345:1')
+    expect(evidence.run.run_id).toBe('__GITHUB_ACTIONS_RUN__')
+    expect(() => bindVerifiedGithubRun({ run: { run_id: 'caller' } }, 'github-actions:auroraverse-ops/aurora-check-in:12345:1')).toThrow('verified_run_binding_invalid')
+  })
   it('signs the exact closed contract and writes it once', () => {
     const input = fixture(); const signed = signCheckinReleaseContractAttestation(input)
     expect(signed.attestation.statement_sha256).toBe(computeCheckinContractStatementSha256(signed))
