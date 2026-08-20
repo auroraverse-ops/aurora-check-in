@@ -131,13 +131,22 @@ export function signRiskV2ReleaseEvidence({ evidence, bundle, privateKeyPkcs8Bas
   return signed
 }
 
+export function bindVerifiedGithubRun(evidence, verifiedRunId) {
+  if (evidence?.run?.run_id !== '__GITHUB_ACTIONS_RUN__'
+    || typeof verifiedRunId !== 'string' || !/^github-actions:[a-z0-9._/-]+:[1-9][0-9]*:[1-9][0-9]*$/.test(verifiedRunId)) throw new Error('verified_run_binding_invalid')
+  const bound = structuredClone(evidence)
+  bound.run.run_id = verifiedRunId
+  return bound
+}
+
 function environmentContext() {
   const parse = (name) => parseBase64Json(process.env[name], name.toLowerCase())
   const config = parse('RISK_V2_SIGNER_CONFIG_BASE64')
   if (!exact(config, ['unit', 'release_unit', 'consumer_release_unit', 'key_id', 'subject', 'authorization_ref', 'public_key_sha256', 'allowed_scopes'])
     || !KEY_ID.test(config.key_id) || !HEX64.test(config.public_key_sha256) || !Array.isArray(config.allowed_scopes)) throw new Error('signer_config_invalid')
+  const evidence = bindVerifiedGithubRun(parse('RISK_V2_EVIDENCE_INPUT_BASE64'), process.env.RISK_V2_VERIFIED_RUN_ID)
   return {
-    evidence: parse('RISK_V2_EVIDENCE_INPUT_BASE64'),
+    evidence,
     bundle: parse('RISK_V2_ARTIFACT_BUNDLE_BASE64'),
     privateKeyPkcs8Base64: process.env.RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64,
     outputDir: process.env.RISK_V2_OUTPUT_DIR,
