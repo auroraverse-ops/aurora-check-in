@@ -21,9 +21,7 @@ function fixture() {
     edge: { functions: [{ id: 'checkin-config', revision_sha256: '5'.repeat(64) }, { id: 'checkin-submit', revision_sha256: '6'.repeat(64) }], aggregate_sha256: '7'.repeat(64) },
     deployment: { revision_sha256: '8'.repeat(64), deployment_digest_sha256: '9'.repeat(64) },
     evidence_ids: ['EVD-CHECKIN-DEPLOYMENT-20260820', 'EVD-CHECKIN-CONTRACT-20260820'],
-    timing: { observed_at: new Date(now - 1_000).toISOString(), valid_until: new Date(now + 86_000_000).toISOString() },
-    attestation: { kind: 'external_signed_manifest', subject: context.subject, authorization_ref: context.authorizationRef,
-      key_id: context.keyId, statement_sha256: '0'.repeat(64), signature_base64: 'AA==' } }
+    timing: { observed_at: new Date(now - 1_000).toISOString(), valid_until: new Date(now + 86_000_000).toISOString() } }
   return { document, context, outputDir, privateKeyPkcs8Base64: privateKey.export({ format: 'der', type: 'pkcs8' }).toString('base64'), publicKey }
 }
 
@@ -38,6 +36,9 @@ describe('check-in release contract attestation signer', () => {
   it('signs the exact closed contract and writes it once', () => {
     const input = fixture(); const signed = signCheckinReleaseContractAttestation(input)
     expect(signed.attestation.statement_sha256).toBe(computeCheckinContractStatementSha256(signed))
+    expect(signed.attestation).toEqual(expect.objectContaining({ kind: 'external_signed_manifest', subject: input.context.subject,
+      authorization_ref: input.context.authorizationRef, key_id: input.context.keyId }))
+    expect(input.document).not.toHaveProperty('attestation')
     expect(crypto.verify(null, Buffer.from(signed.attestation.statement_sha256, 'hex'), input.publicKey, Buffer.from(signed.attestation.signature_base64, 'base64'))).toBe(true)
     expect(JSON.parse(fs.readFileSync(path.join(input.outputDir, 'checkin-release-contract-attestation.json'), 'utf8'))).toEqual(signed)
     expect(() => signCheckinReleaseContractAttestation(input)).toThrow()
@@ -48,7 +49,7 @@ describe('check-in release contract attestation signer', () => {
     ['foreign target', (v) => { v.document.target.target_id = 'foreign' }, 'target_binding_invalid'],
     ['unknown field', (v) => { v.document.extra = true }, 'contract_identity_invalid'],
     ['duplicate evidence', (v) => { v.document.evidence_ids[1] = v.document.evidence_ids[0] }, 'evidence_binding_invalid'],
-    ['wrong signer', (v) => { v.document.attestation.key_id = 'KEY-FOREIGN-EVIDENCE-01' }, 'attestation_template_invalid'], // gitleaks:allow -- public test key identifier
+    ['caller attestation', (v) => { v.document.attestation = { key_id: 'KEY-FOREIGN-EVIDENCE-01' } }, 'contract_identity_invalid'], // gitleaks:allow -- public test key identifier
   ])('rejects %s before output', (_name, mutate, message) => {
     const input = fixture(); mutate(input)
     expect(() => signCheckinReleaseContractAttestation(input)).toThrow(message)
