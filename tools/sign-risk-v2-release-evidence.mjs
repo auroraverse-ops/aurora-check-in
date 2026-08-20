@@ -18,8 +18,8 @@ const canonicalJson = (value) => JSON.stringify(stable(value))
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex')
 const canonicalUtc = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
   && new Date(value).toISOString() === value
-const parseBase64Json = (encoded, label) => {
-  if (typeof encoded !== 'string' || encoded.length < 4 || encoded.length > 60_000 || !BASE64.test(encoded)) throw new Error(`${label}_base64_invalid`)
+const parseBase64Json = (encoded, label, maxEncodedLength = 60_000) => {
+  if (typeof encoded !== 'string' || encoded.length < 4 || encoded.length > maxEncodedLength || !BASE64.test(encoded)) throw new Error(`${label}_base64_invalid`)
   const bytes = Buffer.from(encoded, 'base64')
   if (bytes.toString('base64') !== encoded) throw new Error(`${label}_base64_noncanonical`)
   let value
@@ -137,14 +137,14 @@ export function bindVerifiedGithubRun(evidence, verifiedRunId) {
 }
 
 function environmentContext() {
-  const parse = (name) => parseBase64Json(process.env[name], name.toLowerCase())
+  const parse = (name, maxEncodedLength) => parseBase64Json(process.env[name], name.toLowerCase(), maxEncodedLength)
   const config = parse('RISK_V2_SIGNER_CONFIG_BASE64')
   if (!exact(config, ['unit', 'release_unit', 'consumer_release_unit', 'key_id', 'subject', 'authorization_ref', 'public_key_sha256', 'allowed_scopes'])
     || !KEY_ID.test(config.key_id) || !HEX64.test(config.public_key_sha256) || !Array.isArray(config.allowed_scopes)) throw new Error('signer_config_invalid')
   const evidence = bindVerifiedGithubRun(parse('RISK_V2_EVIDENCE_BODY_BASE64'), process.env.RISK_V2_VERIFIED_RUN_ID)
   return {
     evidence,
-    bundle: parse('RISK_V2_ARTIFACT_BUNDLE_BASE64'),
+    bundle: parse('RISK_V2_ARTIFACT_BUNDLE_BASE64', 2_000_000),
     privateKeyPkcs8Base64: process.env.RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64,
     outputDir: process.env.RISK_V2_OUTPUT_DIR,
     context: {
