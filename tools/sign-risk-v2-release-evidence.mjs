@@ -115,11 +115,17 @@ export function signRiskV2ReleaseEvidence({ evidence, bundle, privateKeyPkcs8Bas
   const signed = structuredClone(evidence)
   signed.attestation.statement_sha256 = computeRiskV2EvidenceStatementSha256(signed)
   signed.attestation.signature_base64 = crypto.sign(null, Buffer.from(signed.attestation.statement_sha256, 'hex'), privateKey).toString('base64')
-  fs.mkdirSync(outputDir, { recursive: true })
-  fs.writeFileSync(path.join(outputDir, 'evidence.json'), `${JSON.stringify(signed, null, 2)}\n`)
+  const outputNames = new Set(['evidence.json'])
+  const outputs = []
   for (const [relative, bytes] of bundleByPath) {
     const name = path.basename(relative)
-    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$/.test(name)) throw new Error('artifact_filename_invalid')
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$/.test(name) || outputNames.has(name)) throw new Error('artifact_filename_invalid')
+    outputNames.add(name)
+    outputs.push([name, bytes])
+  }
+  fs.mkdirSync(outputDir, { recursive: true })
+  fs.writeFileSync(path.join(outputDir, 'evidence.json'), `${JSON.stringify(signed, null, 2)}\n`)
+  for (const [name, bytes] of outputs) {
     fs.writeFileSync(path.join(outputDir, name), bytes)
   }
   return signed
