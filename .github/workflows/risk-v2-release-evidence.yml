@@ -32,8 +32,8 @@ on:
         description: Exact enrollment-versioned repository secret
         required: true
         type: string
-      evidence_input_base64:
-        description: Canonical evidence template JSON
+      evidence_body_base64:
+        description: Canonical closed unsigned evidence body JSON
         required: true
         type: string
       artifact_bundle_base64:
@@ -119,7 +119,7 @@ jobs:
         shell: bash
         env:
           RISK_V2_SIGNER_CONFIG_BASE64: eyJ1bml0IjoiYXVyb3JhLWNoZWNrLWluIiwicmVsZWFzZV91bml0IjoiYXVyb3JhLWNoZWNrLWluIiwiY29uc3VtZXJfcmVsZWFzZV91bml0IjpudWxsLCJrZXlfaWQiOiJLRVktQ0hFQ0tJTi1DSS1FVklERU5DRS0wMSIsInN1YmplY3QiOiJjaGVja2luLWNpLWV2aWRlbmNlLXNpZ25lciIsImF1dGhvcml6YXRpb25fcmVmIjoidHJ1c3QtZW5yb2xsbWVudDpjaGVja2luLWNpLWV2aWRlbmNlOjIwMjYtMDgtMTgiLCJwdWJsaWNfa2V5X3NoYTI1NiI6ImQxMjg2MWZlMzNiMjMwZDM5NWM0NGUwZDBhMzc3OGIzZTBmYzY5OThhNmIxMWViNWI0MjAzYzEwN2FlYmI2OWEiLCJhbGxvd2VkX3Njb3BlcyI6WyJldmlkZW5jZTphdXJvcmEtY2hlY2staW46YnVpbGQ6bG9jYWwiLCJldmlkZW5jZTphdXJvcmEtY2hlY2staW46ZGVwbG95bWVudDphdXJvcmEtdGVzdCIsImV2aWRlbmNlOmF1cm9yYS1jaGVjay1pbjpjaGVja2luX2NvbnRyYWN0OmF1cm9yYS10ZXN0Il19
-          RISK_V2_EVIDENCE_INPUT_BASE64: ${{ inputs.evidence_input_base64 }}
+          RISK_V2_EVIDENCE_BODY_BASE64: ${{ inputs.evidence_body_base64 }}
           RISK_V2_ARTIFACT_BUNDLE_BASE64: ${{ inputs.artifact_bundle_base64 }}
           RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64: ${{ secrets[inputs.secret_name] }}
           RISK_V2_OUTPUT_DIR: ${{ runner.temp }}/risk-v2-release-evidence
