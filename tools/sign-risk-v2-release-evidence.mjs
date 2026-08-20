@@ -31,14 +31,13 @@ const safeRelative = (value) => typeof value === 'string' && value.length > 10 &
   && value.startsWith('docs/06-testing/evidence/risk-v2-baseline/release-evidence/')
   && !path.isAbsolute(value) && !value.split(/[\\/]/).includes('..') && !value.includes('\\')
 
-const TOP = ['schema_version', 'evidence_id', 'claim_ids', 'evidence_type', 'outcome', 'repository', 'run', 'target', 'timing', 'release_binding', 'assertions', 'skips', 'cleanup', 'artifacts', 'attestation']
+const BODY = ['schema_version', 'evidence_id', 'claim_ids', 'evidence_type', 'outcome', 'repository', 'run', 'target', 'timing', 'release_binding', 'assertions', 'skips', 'cleanup', 'artifacts']
 const REPOSITORY = ['name', 'ref', 'commit_sha', 'tree_sha', 'worktree_clean']
 const RUN = ['run_id', 'runner_id', 'command_id', 'command_argv_sha256', 'exit_code']
 const TARGET_BASE = ['environment', 'target_id', 'environment_fingerprint_sha256', 'write_mode']
 const TIMING = ['started_at', 'finished_at']
 const ASSERTION = ['assertion_id', 'result', 'artifact_sha256']
 const ARTIFACT_BASE = ['path', 'sha256', 'size_bytes', 'kind']
-const ATTESTATION = ['kind', 'subject', 'authorization_ref', 'key_id', 'statement_sha256', 'signature_base64']
 const BUNDLE_ENTRY = ['path', 'bytes_base64']
 
 export function computeRiskV2EvidenceStatementSha256(evidence) {
@@ -52,7 +51,7 @@ export function computeRiskV2EvidenceStatementSha256(evidence) {
 }
 
 function validateEvidence(evidence, bundle, context) {
-  if (!exact(evidence, TOP) || evidence.schema_version !== 1 || !EVIDENCE_ID.test(evidence.evidence_id)
+  if (!exact(evidence, BODY) || evidence.schema_version !== 1 || !EVIDENCE_ID.test(evidence.evidence_id)
     || !Array.isArray(evidence.claim_ids) || evidence.claim_ids.length === 0 || new Set(evidence.claim_ids).size !== evidence.claim_ids.length
     || !evidence.claim_ids.every((entry) => CLAIM_ID.test(entry)) || !['positive', 'negative', 'operational', 'mutation'].includes(evidence.evidence_type)
     || evidence.outcome !== 'passed') throw new Error('evidence_identity_invalid')
@@ -97,9 +96,6 @@ function validateEvidence(evidence, bundle, context) {
   if (!evidence.assertions.every((entry) => artifactDigests.has(entry.artifact_sha256))) throw new Error('assertion_artifact_unbound')
   if (evidence.release_binding.release_artifact_path && !evidence.artifacts.some((entry) => entry.path === evidence.release_binding.release_artifact_path
     && evidence.assertions.some((assertion) => assertion.artifact_sha256 === entry.sha256))) throw new Error('release_artifact_unasserted')
-  if (!exact(evidence.attestation, ATTESTATION) || evidence.attestation.kind !== 'external_signed_manifest' || evidence.attestation.subject !== context.subject
-    || evidence.attestation.authorization_ref !== context.authorizationRef || evidence.attestation.key_id !== context.keyId
-    || evidence.attestation.statement_sha256 !== '0'.repeat(64) || evidence.attestation.signature_base64 !== 'AA==') throw new Error('attestation_template_invalid')
   const scope = `evidence:${evidence.release_binding.release_unit}:${evidence.release_binding.evidence_role}:${evidence.target.environment}${context.consumerUnit ? `:${context.consumerUnit}` : ''}`
   if (!context.allowedScopes.includes(scope)) throw new Error('scope_not_authorized')
   return bundleByPath
@@ -112,7 +108,8 @@ export function signRiskV2ReleaseEvidence({ evidence, bundle, privateKeyPkcs8Bas
   if (privateKey.asymmetricKeyType !== 'ed25519') throw new Error('private_key_not_ed25519')
   const publicPem = Buffer.from(crypto.createPublicKey(privateKey).export({ type: 'spki', format: 'pem' }))
   if (sha256(publicPem) !== context.publicKeySha256) throw new Error('public_key_digest_mismatch')
-  const signed = structuredClone(evidence)
+  const signed = { ...structuredClone(evidence), attestation: { kind: 'external_signed_manifest', subject: context.subject,
+    authorization_ref: context.authorizationRef, key_id: context.keyId, statement_sha256: '0'.repeat(64), signature_base64: 'AA==' } }
   signed.attestation.statement_sha256 = computeRiskV2EvidenceStatementSha256(signed)
   signed.attestation.signature_base64 = crypto.sign(null, Buffer.from(signed.attestation.statement_sha256, 'hex'), privateKey).toString('base64')
   const outputNames = new Set(['evidence.json'])
@@ -144,7 +141,7 @@ function environmentContext() {
   const config = parse('RISK_V2_SIGNER_CONFIG_BASE64')
   if (!exact(config, ['unit', 'release_unit', 'consumer_release_unit', 'key_id', 'subject', 'authorization_ref', 'public_key_sha256', 'allowed_scopes'])
     || !KEY_ID.test(config.key_id) || !HEX64.test(config.public_key_sha256) || !Array.isArray(config.allowed_scopes)) throw new Error('signer_config_invalid')
-  const evidence = bindVerifiedGithubRun(parse('RISK_V2_EVIDENCE_INPUT_BASE64'), process.env.RISK_V2_VERIFIED_RUN_ID)
+  const evidence = bindVerifiedGithubRun(parse('RISK_V2_EVIDENCE_BODY_BASE64'), process.env.RISK_V2_VERIFIED_RUN_ID)
   return {
     evidence,
     bundle: parse('RISK_V2_ARTIFACT_BUNDLE_BASE64'),
