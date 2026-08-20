@@ -88,8 +88,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const config = parse('RISK_V2_SIGNER_CONFIG_BASE64')
     if (!exact(config, ['key_id', 'subject', 'authorization_ref', 'public_key_sha256']) || !HEX64.test(config.public_key_sha256)) throw new Error('signer_config_invalid')
     const signed = signCheckinReleaseContractAttestation({ document: parse('RISK_V2_CHECKIN_CONTRACT_BODY_BASE64'),
-      privateKeyPkcs8Base64: secret, context: { ...config, sourceSha: process.env.RISK_V2_VERIFIED_SOURCE_SHA,
-        sourceTreeSha: process.env.RISK_V2_VERIFIED_SOURCE_TREE_SHA }, outputDir: process.env.RISK_V2_OUTPUT_DIR })
+      privateKeyPkcs8Base64: secret, context: { keyId: config.key_id, subject: config.subject,
+        authorizationRef: config.authorization_ref, publicKeySha256: config.public_key_sha256,
+        sourceSha: process.env.RISK_V2_VERIFIED_SOURCE_SHA, sourceTreeSha: process.env.RISK_V2_VERIFIED_SOURCE_TREE_SHA },
+      outputDir: process.env.RISK_V2_OUTPUT_DIR })
     process.stdout.write(`CHECKIN_CONTRACT_ATTESTATION_SIGNED=${signed.attestation_id}\n`)
   } catch (error) {
     process.stderr.write(`FAIL check-in contract attestation signer: ${error.message}\n`)

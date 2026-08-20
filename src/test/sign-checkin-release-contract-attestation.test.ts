@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { execFileSync } from 'node:child_process'
 import { afterEach, describe, expect, it } from 'vitest'
 import { computeCheckinContractStatementSha256, signCheckinReleaseContractAttestation } from '../../tools/sign-checkin-release-contract-attestation.mjs'
 import { bindVerifiedGithubRun } from '../../tools/sign-risk-v2-release-evidence.mjs'
@@ -42,6 +43,23 @@ describe('check-in release contract attestation signer', () => {
     expect(crypto.verify(null, Buffer.from(signed.attestation.statement_sha256, 'hex'), input.publicKey, Buffer.from(signed.attestation.signature_base64, 'base64'))).toBe(true)
     expect(JSON.parse(fs.readFileSync(path.join(input.outputDir, 'checkin-release-contract-attestation.json'), 'utf8'))).toEqual(signed)
     expect(() => signCheckinReleaseContractAttestation(input)).toThrow()
+  })
+
+  it('maps the closed workflow signer config into the CLI signer context', () => {
+    const input = fixture()
+    const config = { key_id: input.context.keyId, subject: input.context.subject,
+      authorization_ref: input.context.authorizationRef, public_key_sha256: input.context.publicKeySha256 }
+    const output = execFileSync(process.execPath, [path.resolve('tools/sign-checkin-release-contract-attestation.mjs')], {
+      encoding: 'utf8', env: { ...process.env,
+        RISK_V2_SIGNER_CONFIG_BASE64: Buffer.from(JSON.stringify(config)).toString('base64'),
+        RISK_V2_CHECKIN_CONTRACT_BODY_BASE64: Buffer.from(JSON.stringify(input.document)).toString('base64'),
+        RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64: input.privateKeyPkcs8Base64,
+        RISK_V2_OUTPUT_DIR: input.outputDir, RISK_V2_VERIFIED_SOURCE_SHA: input.context.sourceSha,
+        RISK_V2_VERIFIED_SOURCE_TREE_SHA: input.context.sourceTreeSha } })
+    expect(output).toContain(`CHECKIN_CONTRACT_ATTESTATION_SIGNED=${input.document.attestation_id}`)
+    const signed = JSON.parse(fs.readFileSync(path.join(input.outputDir, 'checkin-release-contract-attestation.json'), 'utf8'))
+    expect(signed.attestation).toEqual(expect.objectContaining({ key_id: input.context.keyId,
+      authorization_ref: input.context.authorizationRef, subject: input.context.subject }))
   })
 
   it.each([
