@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { assembleCheckinDeploymentObservation, verifyCheckinSourceObservation } from './checkin-readonly-workflow-evidence-lib.mjs'
 
-const SOURCE = Object.freeze({ ref: 'refs/heads/evidence/risk-v2-w2-09-20260817', sha: '34c010a21f9c85f1cd1a4cc65104c159606e6458', tree: 'e88e56d4d11df910f9b2ebf91d41d21eadb01ce1', manifestSha: '744faa9f6f8146aeb626ee5573bd7d31d32086f238e4f9d892e52c90a8fa1232' })
+const SOURCE = Object.freeze({ ref: 'refs/heads/evidence/risk-v2-w2-09-20260817', sha: '34c010a21f9c85f1cd1a4cc65104c159606e6458', tree: 'e88e56d4d11df910f9b2ebf91d41d21eadb01ce1', manifestSha: '9127fc39f5342a1edf166f6bae68f8bff4ab09d8761aab41a1d2dda6873da9dd' })
 const CONTEXT_SHA = '2266ae16bb23813ce8458934b227e98f5f4accc27b563a06b3bfa575bc398729'
 const IMPACT_SHA = 'e44a151280c1d0747695948be71b0e740223c13e9e78df8662ca38f4d7deb378'
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex')
