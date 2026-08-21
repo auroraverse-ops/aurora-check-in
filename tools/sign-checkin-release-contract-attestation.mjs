@@ -7,6 +7,9 @@ import { pathToFileURL } from 'node:url'
 const HEX40 = /^[a-f0-9]{40}$/
 const HEX64 = /^[a-f0-9]{64}$/
 const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
+const KEY_ID = /^[A-Z][A-Z0-9-]{7,119}$/
+const WORKFLOW_SIGNER_CONFIG = ['unit', 'release_unit', 'consumer_release_unit', 'key_id', 'subject', 'authorization_ref', 'public_key_sha256', 'allowed_scopes']
+const CONTRACT_SCOPE = 'evidence:aurora-check-in:checkin_contract:aurora-test'
 const stable = (value) => Array.isArray(value) ? value.map(stable)
   : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])])) : value
 const canonical = (value) => JSON.stringify(stable(value))
@@ -86,7 +89,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   delete process.env.RISK_V2_ED25519_PRIVATE_KEY_PKCS8_BASE64
   try {
     const config = parse('RISK_V2_SIGNER_CONFIG_BASE64')
-    if (!exact(config, ['key_id', 'subject', 'authorization_ref', 'public_key_sha256']) || !HEX64.test(config.public_key_sha256)) throw new Error('signer_config_invalid')
+    if (!exact(config, WORKFLOW_SIGNER_CONFIG) || config.unit !== 'aurora-check-in'
+      || config.release_unit !== 'aurora-check-in' || config.consumer_release_unit !== null
+      || !KEY_ID.test(config.key_id) || typeof config.subject !== 'string'
+      || typeof config.authorization_ref !== 'string' || !HEX64.test(config.public_key_sha256)
+      || !Array.isArray(config.allowed_scopes) || !config.allowed_scopes.includes(CONTRACT_SCOPE)) throw new Error('signer_config_invalid')
     const signed = signCheckinReleaseContractAttestation({ document: parse('RISK_V2_CHECKIN_CONTRACT_BODY_BASE64'),
       privateKeyPkcs8Base64: secret, context: { keyId: config.key_id, subject: config.subject,
         authorizationRef: config.authorization_ref, publicKeySha256: config.public_key_sha256,

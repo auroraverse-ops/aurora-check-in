@@ -2,10 +2,10 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { execFileSync } from 'node:child_process'
 import { afterEach, describe, expect, it } from 'vitest'
 import { computeCheckinContractStatementSha256, signCheckinReleaseContractAttestation } from '../../tools/sign-checkin-release-contract-attestation.mjs'
-import { bindVerifiedGithubRun } from '../../tools/sign-risk-v2-release-evidence.mjs'
 
 const roots = []
 afterEach(() => { for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true }) })
@@ -28,11 +28,13 @@ function fixture() {
 
 describe('check-in release contract attestation signer', () => {
   it('binds generic evidence only to the verified Actions run identity', () => {
-    const evidence = { run: { run_id: '__GITHUB_ACTIONS_RUN__' } }
-    const bound = bindVerifiedGithubRun(evidence, 'github-actions:auroraverse-ops/aurora-check-in:12345:1')
-    expect(bound.run.run_id).toBe('github-actions:auroraverse-ops/aurora-check-in:12345:1')
-    expect(evidence.run.run_id).toBe('__GITHUB_ACTIONS_RUN__')
-    expect(() => bindVerifiedGithubRun({ run: { run_id: 'caller' } }, 'github-actions:auroraverse-ops/aurora-check-in:12345:1')).toThrow('verified_run_binding_invalid')
+    const moduleUrl = pathToFileURL(path.resolve('tools/sign-risk-v2-release-evidence.mjs')).href
+    const script = `import { bindVerifiedGithubRun } from ${JSON.stringify(moduleUrl)};
+      const evidence={run:{run_id:'__GITHUB_ACTIONS_RUN__'}};
+      const bound=bindVerifiedGithubRun(evidence,'github-actions:auroraverse-ops/aurora-check-in:12345:1');
+      if(bound.run.run_id!=='github-actions:auroraverse-ops/aurora-check-in:12345:1'||evidence.run.run_id!=='__GITHUB_ACTIONS_RUN__')process.exit(2);
+      try{bindVerifiedGithubRun({run:{run_id:'caller'}},'github-actions:auroraverse-ops/aurora-check-in:12345:1');process.exit(3)}catch(error){if(error.message!=='verified_run_binding_invalid')process.exit(4)}`
+    expect(() => execFileSync(process.execPath, ['--input-type=module', '--eval', script, 'native-import-test'], { stdio: 'pipe' })).not.toThrow()
   })
   it('signs the exact closed contract and writes it once', () => {
     const input = fixture(); const signed = signCheckinReleaseContractAttestation(input)
@@ -47,8 +49,11 @@ describe('check-in release contract attestation signer', () => {
 
   it('maps the closed workflow signer config into the CLI signer context', () => {
     const input = fixture()
-    const config = { key_id: input.context.keyId, subject: input.context.subject,
-      authorization_ref: input.context.authorizationRef, public_key_sha256: input.context.publicKeySha256 }
+    const config = { unit: 'aurora-check-in', release_unit: 'aurora-check-in', consumer_release_unit: null,
+      key_id: input.context.keyId, subject: input.context.subject,
+      authorization_ref: input.context.authorizationRef, public_key_sha256: input.context.publicKeySha256,
+      allowed_scopes: ['evidence:aurora-check-in:build:local', 'evidence:aurora-check-in:deployment:aurora-test',
+        'evidence:aurora-check-in:checkin_contract:aurora-test'] }
     const output = execFileSync(process.execPath, [path.resolve('tools/sign-checkin-release-contract-attestation.mjs')], {
       encoding: 'utf8', env: { ...process.env,
         RISK_V2_SIGNER_CONFIG_BASE64: Buffer.from(JSON.stringify(config)).toString('base64'),
