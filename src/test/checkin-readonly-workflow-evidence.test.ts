@@ -47,6 +47,8 @@ describe('workflow-owned check-in evidence', () => {
     expect(workflow.match(/ssh -T/g)).toHaveLength(2)
     expect(workflow).toContain('aurora_obs_frontend@185.245.61.192')
     expect(workflow).toContain('aurora_obs_edge@185.245.61.192')
+    expect(workflow).toContain('--output .release-artifacts/risk-v2-checkin-source-manifest.json')
+    expect(workflow).not.toContain('--output "$RUNNER_TEMP/risk-v2-checkin-source-manifest.json"')
   })
 
   it('builds negative build evidence only after actual raw build output and a rejected foreign source', () => {

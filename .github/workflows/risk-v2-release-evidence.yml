@@ -129,7 +129,7 @@ jobs:
             ssh -T -i "$key_root/frontend" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$key_root/known_hosts" aurora_obs_frontend@185.245.61.192 > "$RUNNER_TEMP/risk-v2-frontend.json"
             ssh -T -i "$key_root/edge" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$key_root/known_hosts" aurora_obs_edge@185.245.61.192 > "$RUNNER_TEMP/risk-v2-edge.json"
             if [[ "$ROLE" == checkin_contract ]]; then
-              (cd source && node tools/export-release-manifest.mjs --output "$RUNNER_TEMP/risk-v2-checkin-source-manifest.json")
+              (cd source && node tools/export-release-manifest.mjs --output .release-artifacts/risk-v2-checkin-source-manifest.json)
             fi
           fi
           test -z "$(git -C source status --porcelain --untracked-files=no)"
@@ -146,7 +146,7 @@ jobs:
           RISK_V2_RAW_ARTIFACT_PATH: ${{ runner.temp }}/risk-v2-build-report.txt
           RISK_V2_FRONTEND_OBSERVATION_PATH: ${{ runner.temp }}/risk-v2-frontend.json
           RISK_V2_EDGE_OBSERVATION_PATH: ${{ runner.temp }}/risk-v2-edge.json
-          RISK_V2_SOURCE_MANIFEST_PATH: ${{ runner.temp }}/risk-v2-checkin-source-manifest.json
+          RISK_V2_SOURCE_MANIFEST_PATH: ${{ github.workspace }}/source/.release-artifacts/risk-v2-checkin-source-manifest.json
           RISK_V2_BUILDER_OUTPUT_DIR: ${{ runner.temp }}/risk-v2-unsigned-evidence
         run: |
           set -euo pipefail
