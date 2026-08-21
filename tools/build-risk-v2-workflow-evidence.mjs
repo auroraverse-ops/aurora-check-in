@@ -4,7 +4,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { assembleCheckinDeploymentObservation, verifyCheckinSourceObservation } from './checkin-readonly-workflow-evidence-lib.mjs'
 
-const SOURCE = Object.freeze({ ref: 'refs/heads/evidence/risk-v2-w2-09-20260817', sha: '34c010a21f9c85f1cd1a4cc65104c159606e6458', tree: 'e88e56d4d11df910f9b2ebf91d41d21eadb01ce1', manifestSha: '9127fc39f5342a1edf166f6bae68f8bff4ab09d8761aab41a1d2dda6873da9dd' })
+const SOURCE = Object.freeze({ ref: 'refs/heads/evidence/risk-v2-w2-09-20260817', sha: '34c010a21f9c85f1cd1a4cc65104c159606e6458', tree: 'e88e56d4d11df910f9b2ebf91d41d21eadb01ce1',
+  generatedManifestSha: '68b2e9842a3b9447002d9143cc15989b7e6db0cfa6cc524c5bcc12cc75dbf9aa', canonicalManifestSha: 'f22ad70a6dd66f7345ad5c7754d16076c42239e1e280b2965fea5f7588b470ee' })
 const CONTEXT_SHA = '2266ae16bb23813ce8458934b227e98f5f4accc27b563a06b3bfa575bc398729'
 const IMPACT_SHA = 'e44a151280c1d0747695948be71b0e740223c13e9e78df8662ca38f4d7deb378'
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex')
@@ -58,12 +59,12 @@ if (role === 'build') {
     add('checkin-contract-mutation-report.json', canonicalBytes({ schema: 'checkin-contract-mutation-proof', schema_version: 1,
       deployment_digest_sha256: observation.deployment.deployment_digest_sha256, target_mutation_rejected: true, expected_error: 'CHECKIN_SOURCE_OBSERVATION_INVALID' }))
     const manifestBytes = fs.readFileSync(process.env.RISK_V2_SOURCE_MANIFEST_PATH)
-    if (sha256(manifestBytes) !== SOURCE.manifestSha) throw new Error('source_manifest_digest_invalid')
+    if (sha256(manifestBytes) !== SOURCE.generatedManifestSha) throw new Error('source_manifest_digest_invalid')
     const manifest = JSON.parse(manifestBytes.toString('utf8'))
     if (manifest?.source?.commit_sha !== SOURCE.sha || manifest?.source?.tree_sha !== SOURCE.tree
       || manifest?.contracts?.api_contract_version !== 'checkin-config-submit-v1') throw new Error('source_manifest_binding_invalid')
     const contract = { schema_version: 1, attestation_id: `ATT-CHECKIN-WORKFLOW-${process.env.GITHUB_RUN_ID}`,
-      unit: 'aurora-check-in', source: { repository: 'aurora-check-in', commit_sha: SOURCE.sha, tree_sha: SOURCE.tree, manifest_sha256: SOURCE.manifestSha },
+      unit: 'aurora-check-in', source: { repository: 'aurora-check-in', commit_sha: SOURCE.sha, tree_sha: SOURCE.tree, manifest_sha256: SOURCE.canonicalManifestSha },
       target: observation.target, api_contract_version: manifest.contracts.api_contract_version, edge: observation.edge,
       deployment: observation.deployment, evidence_ids: ['EVD-W2-09-CHECKIN-DEPLOYMENT', 'EVD-W2-09-CHECKIN-CONTRACT'],
       timing: { observed_at: observation.timing.observed_until, valid_until: new Date(Date.parse(finishedAt) + 23 * 60 * 60 * 1000).toISOString() } }
