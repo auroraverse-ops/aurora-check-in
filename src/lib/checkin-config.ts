@@ -4,6 +4,42 @@
 
 import { safeRandomUUID } from './crypto-safe'
 
+/**
+ * Einwilligungs-Architektur T5/T6 (Spec §5.5, §11.1, §13.1).
+ *
+ * Der Server liefert Wortlaut UND Hash je Text. Das Tablet zeigt genau diesen
+ * Wortlaut an und schickt den Hash zurück — `checkin-submit` vergleicht gegen
+ * die aktive Version und antwortet 409 `consent_text_veraltet`, wenn das Tablet
+ * einen überholten Text im Cache hatte. Der Hash wird deshalb NIE clientseitig
+ * neu berechnet: er ist der Nachweis des Servers, nicht unsere eigene Rechnung.
+ */
+export interface ConsentTextBlock {
+  version: number
+  wortlaut: string
+  detailtext: string | null
+  hash: string
+}
+
+export type ConsentKanal = 'email' | 'sms' | 'whatsapp'
+
+export interface ConsentConfig {
+  modell: 'v2' | 'v3'
+  /**
+   * false, sobald ein Pflichttext für diesen Mandanten nicht freigegeben ist
+   * (fail-closed, Spec S4/S5). Das Tablet zeigt dann eine Wartemeldung statt
+   * eines improvisierten Ersatztextes.
+   */
+  verfuegbar: boolean
+  grund: string | null
+  /** Nur die Kanäle, die dieser Betrieb tatsächlich anbietet. */
+  kanaele: ConsentKanal[]
+  /** WhatsApp ist ein Unterkästchen — nur sichtbar, wenn der Kanal aktiv ist. */
+  whatsapp_option: boolean
+  versorgung: ConsentTextBlock | null
+  kontakt: ConsentTextBlock | null
+  datenschutzhinweise: { version: number; wortlaut: string } | null
+}
+
 export interface CheckinConfig {
   tenant_name: string
   tenant_slug: string
@@ -46,6 +82,12 @@ export interface CheckinConfig {
   submit_url: string
   submit_token: string
   token_expires_at: number
+  /**
+   * T5 (2026-08-30): Einwilligungstexte + Kanalliste des Mandanten.
+   * Optional — ältere Backend-Versionen liefern das Feld nicht, dann bleibt
+   * das Tablet auf dem v2-Pfad.
+   */
+  consent?: ConsentConfig
 }
 
 // Config-API-URL — Default Testserver, überschreibbar per Env
@@ -61,6 +103,28 @@ export async function fetchCheckinConfig(tenantSlug: string, filialeSlug?: strin
     throw new Error(err.error || `Config-Fehler (${res.status})`)
   }
   return res.json()
+}
+
+/**
+ * Fehler eines Submit-Aufrufs samt Maschinen-Code des Servers.
+ *
+ * WARUM EIN EIGENER FEHLERTYP: `checkin-submit` antwortet bei einem
+ * ueberholten Einwilligungstext mit HTTP 409 und `code: 'consent_text_veraltet'`.
+ * Vorher warf diese Datei nur `err.error` — der Code ging verloren, und der
+ * Client haette den Fall am deutschen Fehlertext erraten muessen. Ein Text ist
+ * keine Schnittstelle: er darf sich aendern, ohne dass etwas bricht. Der Code
+ * darf das nicht.
+ */
+export class CheckinSubmitError extends Error {
+  readonly status: number
+  readonly code: string | null
+
+  constructor(message: string, status: number, code: string | null) {
+    super(message)
+    this.name = 'CheckinSubmitError'
+    this.status = status
+    this.code = code
+  }
 }
 
 export async function submitCheckin(
@@ -84,7 +148,11 @@ export async function submitCheckin(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }))
-    throw new Error(err.error || `Submit-Fehler (${res.status})`)
+    throw new CheckinSubmitError(
+      err.error || `Submit-Fehler (${res.status})`,
+      res.status,
+      typeof err.code === 'string' ? err.code : null,
+    )
   }
 
   return res.json()

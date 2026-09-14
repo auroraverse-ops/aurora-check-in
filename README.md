@@ -1,93 +1,31 @@
-# Welcome to your Lovable project
+# Aurora Smart Check-in
 
-## Project info
+Stand: 30.08.2026
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Mandantenfähige Check-in-Oberfläche für Aurora. Der aktuelle Code unterstützt zwei klar
+getrennte Betriebsarten:
 
-## How can I edit this code?
+- Aurora: `/:tenant` und optional `/:tenant/:filiale`; Konfiguration wird aus der
+  Check-in-Konfigurationsschnittstelle geladen.
+- AKZ-Bestand: Root-Route mit `VITE_STANDORT` und `VITE_N8N_WEBHOOK_URL`.
 
-There are several ways of editing your application.
+Die maßgeblichen Quellen sind `src/App.tsx`, `src/lib/checkin-config.ts` und für die sichtbare
+Datenschutzinformation `src/pages/Privacy.tsx`. Die frühere Lovable-Standardanleitung war kein
+gültiger Projekteinstieg und wurde beim Dokumentationsaudit entfernt.
 
-**Use Lovable**
+## Lokal prüfen
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm install
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+Eine Beispielkonfiguration für den Bestandsmodus steht in `.env.example`. Sie enthält nur
+Beispielwerte. Produktive Zieladressen und Zugangsdaten gehören in die geschützte
+Deployment-Konfiguration und nicht in Git.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Abgrenzung
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
-
-## Source-owned Release-Komponentenmanifest
-
-Das Repository liefert seinen Releasevertrag selbst. Der deklarative Vertrag
-liegt unter `release/component-manifest.contract.json`; der versionierte
-Exporter unter `tools/export-release-manifest.mjs`.
-
-```sh
-npm run check:release-manifest-contract
-npm run release:manifest
-npm run release:manifest:check
-```
-
-Der Export verlangt einen sauberen Git-Checkout und schreibt deterministisch
-nach `.release-artifacts/component-manifest.json`. Dieser Pfad ist absichtlich
-ignoriert: Das Artefakt bindet den bereits existierenden Commit und vermeidet
-so eine zirkulaere Commit-SHA. Es enthaelt nur sanitiserte Vertragsmetadaten,
-Claim-IDs und Digests. Build-, Edge- und Deploymentnachweise bleiben separate,
-attestierte Release-Evidence; der Exporter fuehrt weder Netzwerkzugriffe noch
-Deployments aus.
+Die Oberfläche allein belegt weder die Erreichbarkeit des Zielsystems noch eine erfolgreiche
+Speicherung. Vor einem Release sind mindestens Konfigurationsabruf, Absenden, Fehlerpfad und
+Datenschutzdarstellung gegen die vorgesehene Zielumgebung zu prüfen.

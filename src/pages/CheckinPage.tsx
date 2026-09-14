@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, type SyntheticEvent 
 import { useParams } from "react-router-dom";
 import { fetchCheckinConfig, submitCheckin, type CheckinConfig } from "@/lib/checkin-config";
 import CheckInFormDynamic from "@/components/CheckInFormDynamic";
+import { CONSENT_VERALTET_HINWEIS, istWortlautVeraltet, zeigeWartemeldung } from "@/lib/consent-v3";
 
 // Aurora-Defaults (Migration 173 in aurora-v2): Neon-Gruen.
 const DEFAULT_BRAND_H = 130;
@@ -113,9 +114,22 @@ const CheckinPage = () => {
   }, []);
 
   // Submit-Handler
+  //
+  // T6: Antwortet der Server mit 409 `consent_text_veraltet`, hatte das Tablet
+  // einen ueberholten Wortlaut im Speicher. Dann wird NICHT gespeichert, sondern
+  // die Config neu geladen — eine Einwilligung in einen Text, den der Kunde nie
+  // gesehen hat, waere kein Nachweis (Spec §5.5 Hash-Bindung, S5).
   const handleSubmit = async (data: Record<string, unknown>) => {
     if (!config) throw new Error("Konfiguration nicht geladen");
-    return submitCheckin(config.submit_url, config.submit_token, data);
+    try {
+      return await submitCheckin(config.submit_url, config.submit_token, data);
+    } catch (err) {
+      if (istWortlautVeraltet(err)) {
+        await loadConfig();
+        throw new Error(CONSENT_VERALTET_HINWEIS);
+      }
+      throw err;
+    }
   };
 
   // Welle 9 (2026-04-28): Markenfarbe aus tenant_theme aufloesen.
@@ -179,6 +193,29 @@ const CheckinPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-white/60 text-lg animate-pulse">Laden...</div>
+      </div>
+    );
+  }
+
+  // Fail-closed (Spec S4/S5): der Mandant steht auf v3, aber ein Pflichttext ist
+  // nicht freigegeben. Dann zeigt das Tablet KEINEN improvisierten Ersatztext,
+  // sondern eine Wartemeldung — der Betrieb arbeitet bis zur Freigabe wie vor
+  // dem Tablet (Arbeitsanweisung T9).
+  if (config && zeigeWartemeldung(config.consent)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black px-6">
+        <div className="text-center space-y-4 max-w-md">
+          <h1 className="text-2xl font-bold text-white">Check-in gerade nicht möglich</h1>
+          <p className="text-white/70 text-lg">
+            Bitte wende dich kurz an unser Team — wir nehmen deine Daten persönlich auf.
+          </p>
+          <button
+            onClick={loadConfig}
+            className="px-6 py-3 rounded-xl bg-white/10 text-white hover:bg-white/20 transition min-h-12"
+          >
+            Erneut versuchen
+          </button>
+        </div>
       </div>
     );
   }

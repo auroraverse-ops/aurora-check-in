@@ -9,6 +9,14 @@ import { z } from "zod";
 import type { CheckinConfig } from "@/lib/checkin-config";
 import { CONSENT_TEXTS, hashConsentText } from "@/lib/consent-texts";
 import { calculateAge } from "@/lib/age";
+import ConsentBlockV3 from "./ConsentBlockV3";
+import {
+  LEERE_AUSWAHL,
+  baueConsentPayload,
+  darfAbsenden,
+  istV3Aktiv,
+  type ConsentAuswahl,
+} from "@/lib/consent-v3";
 
 // Hobby-Kategorien (seit 2026-04-15: v2 Payload-Schema)
 // Motorradfahren neu seit 2026-04, Golfen seit 2026-05.
@@ -92,6 +100,12 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Einwilligungs-Architektur T6: Zeigt dieser Mandant das neue Check-in-Ende?
+  // Nur wenn er auf consent_modell='v3' steht UND alle Texte freigegeben sind.
+  // Alles andere bleibt exakt auf dem alten v2-Pfad (Spec S5: alt und neu parallel).
+  const v3Aktiv = istV3Aktiv(config.consent);
+  const [consentAuswahl, setConsentAuswahl] = useState<ConsentAuswahl>(LEERE_AUSWAHL);
+
   useEffect(() => {
     if (!isSuccess) return;
     const timer = setTimeout(() => setIsSuccess(false), 10000);
@@ -113,7 +127,11 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
     gruppen_gespraeche: false,
     marketing_quelle: "" as "" | "empfehlung" | "suchmaschine" | "social_media" | "radio" | "zeitung_flyer" | "keine_angabe",
     datenschutz: false,
-    erinnerung: true,
+    // KEINE VORAUSWAHL (Spec E5/A5, Planet49 / BGH I ZR 7/16). Bis 30.08.2026
+    // stand hier `true` — der Haken war beim Oeffnen des Formulars bereits
+    // gesetzt. Das ist fuer eine werbliche Einwilligung unzulaessig; der
+    // Zuruecksetz-Block nach erfolgreichem Submit fuehrte ohnehin schon `false`.
+    erinnerung: false,
   });
 
   // Akustik-Frage: nur sichtbar wenn Feature-Flag aktiv UND Kunde >= 50 Jahre
@@ -142,10 +160,15 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.datenschutz) {
+    // Haken 1 ist Pflicht — v3 ueber die Consent-Auswahl, v2 ueber das alte Feld.
+    // Ohne ihn kein Check-in (Spec E8/§10.3): der Knopf ist bereits gesperrt,
+    // dies ist die zweite Sicherung fuer den Tastatur-/Enter-Weg.
+    if (v3Aktiv ? !darfAbsenden(consentAuswahl) : !formData.datenschutz) {
       toast({
-        title: "Datenschutz erforderlich",
-        description: "Bitte akzeptiere die Datenschutzbestimmungen, um fortzufahren.",
+        title: "Einwilligung erforderlich",
+        description: v3Aktiv
+          ? "Bitte bestaetige die Einwilligung zur Versorgung, um fortzufahren."
+          : "Bitte akzeptiere die Datenschutzbestimmungen, um fortzufahren.",
         variant: "destructive",
       });
       return;
@@ -166,7 +189,11 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
     setIsLoading(true);
 
     try {
-      const consentTextHash = await hashConsentText(CONSENT_TEXTS.datenschutz.text);
+      // v2: der Hash wird hier berechnet (und kann auf HTTP-Tablets der Sentinel
+      // `no-subtle-crypto` sein). v3 braucht ihn nicht — dort liefert der Server
+      // den Hash zum Wortlaut, und der Sentinel kann den Check-in nicht mehr
+      // stoeren, weil gar nichts mehr lokal gehasht wird.
+      const consentTextHash = v3Aktiv ? null : await hashConsentText(CONSENT_TEXTS.datenschutz.text);
 
       // v2 Payload — strukturiert, kein Matching mehr nötig
       const sehhilfeObj = {
@@ -203,11 +230,24 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         hobbys: hobbysObj,
         bildschirmzeit: result.data.bildschirmzeit,
         beschwerden: beschwerdenObj,
-        datenschutz: result.data.datenschutz,
-        erinnerung: result.data.erinnerung,
-        consent_text_version: CONSENT_TEXTS.datenschutz.version,
-        consent_text_hash: consentTextHash,
       };
+
+      if (v3Aktiv && config.consent) {
+        // v3 (Spec §11.1): zwei Haken, Wortlaut-Nachweis kommt vom Server.
+        const consentTeil = baueConsentPayload(config.consent, consentAuswahl);
+        if (!consentTeil.ok) {
+          // `finally` setzt isLoading zurueck — hier nur aussteigen.
+          toast({ title: "Einwilligung erforderlich", description: consentTeil.fehler, variant: "destructive" });
+          return;
+        }
+        Object.assign(payload, consentTeil.felder ?? {});
+      } else {
+        // v2 unveraendert — bestehende Tablets und Mandanten ohne v3-Schalter.
+        payload.datenschutz = result.data.datenschutz;
+        payload.erinnerung = result.data.erinnerung;
+        payload.consent_text_version = CONSENT_TEXTS.datenschutz.version;
+        payload.consent_text_hash = consentTextHash;
+      }
 
       if (zeigeAkustikFrage) {
         payload.akustik = {
@@ -240,6 +280,8 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         datenschutz: false,
         erinnerung: false,
       });
+      // Der naechste Kunde faengt bei leeren Haken an — nie bei denen des vorigen.
+      setConsentAuswahl(LEERE_AUSWAHL);
     } catch (error) {
       console.error("Check-in error:", error);
       toast({
@@ -463,7 +505,16 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
         </div>
       )}
 
-      {/* Checkboxes */}
+      {/* Einwilligungen — T6: v3 zeigt die zwei Haken mit den Texten des
+          Mandanten; v2 bleibt unveraendert (fest eingebauter Wortlaut, Link auf
+          die statische Seite /privacy). */}
+      {v3Aktiv && config.consent ? (
+        <ConsentBlockV3
+          consent={config.consent}
+          auswahl={consentAuswahl}
+          onChange={setConsentAuswahl}
+        />
+      ) : (
       <div className="space-y-5 pt-4">
         <AuroraCheckbox
           id="datenschutz"
@@ -489,12 +540,13 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
           label="Ja, erinnere mich bitte kostenlos an meinen nächsten Augenvorsorgecheck (via SMS/E-Mail), damit meine Sehkraft optimal bleibt."
         />
       </div>
+      )}
 
-      {/* Submit */}
+      {/* Submit — bleibt gesperrt, solange Haken 1 fehlt (Spec E8/§10.3). */}
       <div className="pt-6">
         <button
           type="submit"
-          disabled={isLoading || !formData.datenschutz}
+          disabled={isLoading || (v3Aktiv ? !darfAbsenden(consentAuswahl) : !formData.datenschutz)}
           className="aurora-button"
         >
           {isLoading ? "WIRD VERARBEITET..." : "JETZT EINCHECKEN"}
