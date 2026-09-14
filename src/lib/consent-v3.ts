@@ -76,6 +76,65 @@ export function darfAbsenden(auswahl: ConsentAuswahl): boolean {
   return auswahl.versorgung === true
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+ * „Alles auswaehlen" — eine BEDIENHILFE, keine Sammeleinwilligung
+ * ──────────────────────────────────────────────────────────────────────────
+ * Artur, 14.09.2026: ein Knopf oberhalb der Haken, der beim Druecken alle
+ * setzt und beim Abwaehlen alle wieder loest.
+ *
+ * WARUM DAS ZULAESSIG IST — und wo die Grenze verlaeuft:
+ * Regel 1 dieser Datei (KEINE VORAUSWAHL, Planet49) verbietet, dass ein Haken
+ * VORGESETZT ist. Sie verbietet nicht, dass der Nutzer mehrere Haken mit einer
+ * Handlung setzt. Der Unterschied ist die aktive Handlung:
+ *   - vorangekreuzt        -> keine Einwilligung (Planet49)
+ *   - ein Klick setzt alle -> Einwilligung, sofern jeder Haken danach
+ *                             SICHTBAR gesetzt und EINZELN abwaehlbar ist
+ * Genau das leistet diese Funktion: sie schreibt in denselben Zustand, den
+ * auch die Einzelhaken schreiben. Es entsteht kein verborgener Sammelwert,
+ * keine Ersatz-Zustimmung und kein eigener Nachweis - der Nachweis bleibt der
+ * gehashte Wortlaut je Einwilligung.
+ *
+ * DESHALB IST DER ANFANGSZUSTAND IMMER `false`: Der Sammelknopf selbst darf
+ * ebenso wenig vorgesetzt sein wie die Haken darunter.
+ */
+
+/**
+ * Alles, was dieser Mandant ueberhaupt anbietet. Der Sammelknopf darf nichts
+ * setzen, was der Betrieb nicht konfiguriert hat - sonst entstuende eine
+ * Einwilligung ohne zugehoerigen Wortlaut, und der Server wiese sie ab.
+ */
+export function alleSetzbaren(consent: ConsentConfig): ConsentKanal[] {
+  const haupt = hauptKanaele(consent)
+  if (haupt.length === 0) return []
+  return consent.whatsapp_option && consent.kanaele.includes('whatsapp')
+    ? [...haupt, 'whatsapp']
+    : haupt
+}
+
+/**
+ * Ist gerade ALLES gewaehlt? Der Sammelknopf spiegelt damit den Zustand der
+ * Einzelhaken - waehlt jemand unten einen ab, geht er oben von selbst aus.
+ * Ohne diese Rueckkopplung behauptete der Knopf etwas, das nicht mehr stimmt.
+ */
+export function allesGewaehlt(consent: ConsentConfig, auswahl: ConsentAuswahl): boolean {
+  if (!auswahl.versorgung) return false
+  const setzbar = alleSetzbaren(consent)
+  return setzbar.every((k) => auswahl.kanaele.includes(k))
+}
+
+/**
+ * Umschalten des Sammelknopfes: an setzt alles, aus loest alles.
+ *
+ * Das Abwaehlen loest AUCH die Versorgungs-Einwilligung - obwohl sie Pflicht
+ * ist. Absicht: ein Knopf, der beim Abwaehlen etwas stehen laesst, waere ein
+ * Knopf, der nicht tut, was er sagt. Der Absende-Knopf sperrt danach ohnehin
+ * (darfAbsenden), und der Nutzer sieht unmittelbar, was fehlt.
+ */
+export function allesUmschalten(consent: ConsentConfig, auswahl: ConsentAuswahl, an: boolean): ConsentAuswahl {
+  if (!an) return { ...LEERE_AUSWAHL }
+  return { versorgung: true, kanaele: alleSetzbaren(consent) }
+}
+
 /**
  * Ein einziger Ergebnistyp statt einer diskriminierten Union: dieses Projekt
  * faehrt mit `strictNullChecks: false` (tsconfig.app.json), und ohne

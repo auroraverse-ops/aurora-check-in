@@ -2,6 +2,8 @@ import { useState } from "react";
 import AuroraCheckbox from "./AuroraCheckbox";
 import type { ConsentConfig } from "@/lib/checkin-config";
 import {
+  allesGewaehlt,
+  allesUmschalten,
   hauptKanaele,
   kontaktHakenGesetzt,
   kontaktUmschalten,
@@ -67,8 +69,44 @@ const ConsentBlockV3 = ({ consent, auswahl, onChange }: Props) => {
   const kontaktAn = kontaktHakenGesetzt(auswahl);
   const kanalListe = kanaele.map((k) => KANAL_LABEL[k] ?? k).join(" und ");
 
+  // Der Sammelknopf lohnt sich erst ab zwei Haken. Gibt es nur die
+  // Versorgungs-Einwilligung (Betrieb ohne Kontaktkanaele), waere er ein
+  // zweiter Weg zum selben einen Klick - und damit nur Rauschen.
+  const allesAn = allesGewaehlt(consent, auswahl);
+  const mehrAlsEinHaken = kanaele.length > 0 && !!consent.kontakt;
+
   return (
     <div className="space-y-6 pt-4">
+      {/* „Alles auswaehlen" — Bedienhilfe, kein eigener Einwilligungstatbestand.
+          Artur, 14.09.2026: ein Knopf oben, der alle Haken setzt und beim
+          Abwaehlen alle wieder loest.
+
+          Er traegt BEWUSST keinen Einwilligungs-Wortlaut: Er willigt in nichts
+          ein, er bedient nur die Haken darunter. Der Nachweis bleibt der
+          gehashte Wortlaut je Einwilligung; im Payload taucht dieser Knopf
+          nicht auf.
+
+          `allesGewaehlt` spiegelt den Zustand der Einzelhaken: waehlt jemand
+          unten einen ab, geht der Knopf oben von selbst aus. Ohne diese
+          Rueckkopplung behauptete er etwas, das nicht mehr stimmt.
+
+          Nur sichtbar, wenn es ueberhaupt mehr als einen Haken gibt - bei einem
+          einzigen waere eine Sammelbedienung nur ein zweiter Weg zum selben
+          Klick. */}
+      {mehrAlsEinHaken && (
+        <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3">
+          <AuroraCheckbox
+            id="consent-alles"
+            checked={allesAn}
+            onChange={(checked) => onChange(allesUmschalten(consent, auswahl, checked))}
+            label="Alles auswählen"
+          />
+          <p className="pl-12 mt-1 text-xs text-white/40">
+            Setzt alle Haken unten. Sie können jeden einzeln wieder abwählen.
+          </p>
+        </div>
+      )}
+
       {/* Haken 1 — Versorgung. Pflicht: ohne ihn bleibt der Knopf gesperrt. */}
       <div>
         <AuroraCheckbox

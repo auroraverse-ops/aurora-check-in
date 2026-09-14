@@ -16,6 +16,9 @@ import { describe, it, expect } from 'vitest'
 import { CheckinSubmitError, type ConsentConfig } from '../lib/checkin-config'
 import {
   LEERE_AUSWAHL,
+  alleSetzbaren,
+  allesGewaehlt,
+  allesUmschalten,
   baueConsentPayload,
   darfAbsenden,
   hauptKanaele,
@@ -187,5 +190,65 @@ describe('409 consent_text_veraltet wird am Code erkannt, nicht am Text', () => 
     expect(istWortlautVeraltet(new CheckinSubmitError('Ungueltiger Kanal', 400, null))).toBe(false)
     expect(istWortlautVeraltet(new Error('Wortlaut veraltet — bitte neu laden'))).toBe(false)
     expect(istWortlautVeraltet(null)).toBe(false)
+  })
+})
+
+describe('„Alles auswaehlen" — Bedienhilfe, keine Sammeleinwilligung', () => {
+  const mitAllem = config({ kanaele: ['email', 'sms', 'whatsapp'], whatsapp_option: true })
+
+  it('setzt beim Einschalten JEDEN Haken, auch WhatsApp', () => {
+    const nach = allesUmschalten(mitAllem, LEERE_AUSWAHL, true)
+    expect(nach.versorgung).toBe(true)
+    expect(nach.kanaele).toEqual(['email', 'sms', 'whatsapp'])
+  })
+
+  it('loest beim Ausschalten ALLES, auch die Pflicht-Einwilligung', () => {
+    const voll = allesUmschalten(mitAllem, LEERE_AUSWAHL, true)
+    const leer = allesUmschalten(mitAllem, voll, false)
+    expect(leer.versorgung).toBe(false)
+    expect(leer.kanaele).toEqual([])
+    // Der Absende-Knopf sperrt danach wieder — der Nutzer sieht sofort, was fehlt.
+    expect(darfAbsenden(leer)).toBe(false)
+  })
+
+  it('setzt NICHTS, was der Betrieb nicht anbietet', () => {
+    // Nur E-Mail konfiguriert: SMS und WhatsApp duerfen nicht erscheinen,
+    // sonst entstuende eine Einwilligung ohne zugehoerigen Wortlaut.
+    const nurMail = config({ kanaele: ['email'], whatsapp_option: false })
+    const nach = allesUmschalten(nurMail, LEERE_AUSWAHL, true)
+    expect(nach.kanaele).toEqual(['email'])
+  })
+
+  it('setzt WhatsApp nur, wenn der Betrieb die Option fuehrt', () => {
+    // Kanal in der Liste, aber Option aus -> kein WhatsApp.
+    const ohneOption = config({ kanaele: ['email', 'whatsapp'], whatsapp_option: false })
+    expect(alleSetzbaren(ohneOption)).toEqual(['email'])
+  })
+
+  it('spiegelt den Zustand der Einzelhaken: ein abgewaehlter Haken schaltet ihn aus', () => {
+    const voll = allesUmschalten(mitAllem, LEERE_AUSWAHL, true)
+    expect(allesGewaehlt(mitAllem, voll)).toBe(true)
+
+    // Unten WhatsApp abwaehlen -> oben geht der Sammelknopf aus.
+    const ohneWa = whatsappUmschalten(voll, false)
+    expect(allesGewaehlt(mitAllem, ohneWa)).toBe(false)
+
+    // Auch die Versorgung allein genuegt nicht.
+    expect(allesGewaehlt(mitAllem, { ...voll, versorgung: false })).toBe(false)
+  })
+
+  it('ist im Ausgangszustand AUS — kein vorangekreuzter Sammelknopf (Planet49)', () => {
+    expect(allesGewaehlt(mitAllem, LEERE_AUSWAHL)).toBe(false)
+  })
+
+  it('schreibt in denselben Zustand wie die Einzelhaken — kein verborgener Sammelwert', () => {
+    // Der Beweis, dass es eine Bedienhilfe ist und kein eigener Tatbestand:
+    // was der Sammelknopf erzeugt, ist Schritt fuer Schritt nachbaubar.
+    const ueberSammel = allesUmschalten(mitAllem, LEERE_AUSWAHL, true)
+    const einzeln = whatsappUmschalten(
+      kontaktUmschalten(mitAllem, { ...LEERE_AUSWAHL, versorgung: true }, true),
+      true,
+    )
+    expect(ueberSammel).toEqual(einzeln)
   })
 })
