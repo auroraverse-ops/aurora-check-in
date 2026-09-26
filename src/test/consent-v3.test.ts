@@ -160,17 +160,23 @@ describe('v3 nur bei geschaltetem Mandanten und freigegebenen Texten (Spec S4/S5
     expect(istV3Aktiv(config())).toBe(true)
   })
 
-  it('ist inaktiv bei modell v2 — das alte Formular bleibt', () => {
+  // ph-w0 PH0-02 (26.09.2026): der v2-Rueckfall mit fest eingebautem Wortlaut ist
+  // entfernt. "nicht v3" zeigt jetzt ebenfalls die Wartemeldung, nie ein Formular
+  // mit Ersatztext.
+  it('ist inaktiv bei modell v2 und zeigt die Wartemeldung', () => {
     expect(istV3Aktiv(config({ modell: 'v2' }))).toBe(false)
-    expect(zeigeWartemeldung(config({ modell: 'v2' }))).toBe(false)
+    expect(zeigeWartemeldung(config({ modell: 'v2' }))).toBe(true)
   })
 
-  it('ist inaktiv ohne consent-Block (aelteres Backend)', () => {
+  it('ist inaktiv ohne consent-Block (aelteres Backend) und zeigt die Wartemeldung', () => {
     expect(istV3Aktiv(undefined)).toBe(false)
-    expect(zeigeWartemeldung(undefined)).toBe(false)
+    expect(zeigeWartemeldung(undefined)).toBe(true)
   })
 
-  // Der Unterschied, auf den es ankommt: "nicht v3" zeigt das alte Formular,
+  it('zeigt keine Wartemeldung, wenn v3 aktiv ist', () => {
+    expect(zeigeWartemeldung(config())).toBe(false)
+  })
+
   // "v3 ohne freigegebenen Text" zeigt eine Wartemeldung — nie einen Ersatztext.
   it('zeigt die Wartemeldung, wenn v3 geschaltet, aber ein Text nicht freigegeben ist', () => {
     const c = config({ verfuegbar: false, grund: 'Text nicht freigegeben: kontakt' })

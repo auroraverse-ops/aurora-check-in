@@ -35,12 +35,19 @@ export function istV3Aktiv(consent: ConsentConfig | undefined): boolean {
 }
 
 /**
- * v3 ist geschaltet, aber ein Text fehlt → Wartemeldung statt Ersatztext.
- * Bewusst getrennt von `istV3Aktiv`: „nicht v3" und „v3 kaputt" sind zwei
- * verschiedene Zustaende mit zwei verschiedenen Bildschirmen.
+ * Wartemeldung statt Formular, sobald der v3-Weg nicht aktiv ist.
+ *
+ * ph-w0 PH0-02 (Spec aurora-v2 portal-hauptkanal/01, 26.09.2026): Frueher fiel
+ * ein Mandant ohne v3 (consent_modell = 'v2' oder aeltere Konfiguration ohne
+ * `consent`) auf den fest eingebauten Wortlaut mit Link auf die statische Seite
+ * /privacy zurueck - einen Text fuer EINEN Betrieb, mit lit. h. Gemessen am
+ * 26.09.: kein Mandant auf Test oder Prod steht auf v2. Deshalb gibt es im
+ * Aurora-Weg keinen Rueckfall mehr: nicht v3 und v3 ohne freigegebene Texte
+ * fuehren beide fail-closed zur Wartemeldung. Der AKZ-Bestandsmodus (Index,
+ * CheckInForm) ist davon nicht betroffen.
  */
 export function zeigeWartemeldung(consent: ConsentConfig | undefined): boolean {
-  return !!consent && consent.modell === 'v3' && !consent.verfuegbar
+  return !istV3Aktiv(consent)
 }
 
 /** Kanaele des Betriebs ohne WhatsApp — WhatsApp ist das Unterkaestchen. */
