@@ -1,6 +1,6 @@
 # Aurora Smart Check-in
 
-Stand: 30.08.2026
+Stand: 28.09.2026
 
 Mandantenfähige Check-in-Oberfläche für Aurora. Der aktuelle Code unterstützt zwei klar
 getrennte Betriebsarten:
@@ -9,8 +9,12 @@ getrennte Betriebsarten:
   Check-in-Konfigurationsschnittstelle geladen.
 - AKZ-Bestand: Root-Route mit `VITE_STANDORT` und `VITE_N8N_WEBHOOK_URL`.
 
-Die maßgeblichen Quellen sind `src/App.tsx`, `src/lib/checkin-config.ts` und für die sichtbare
-Datenschutzinformation `src/pages/Privacy.tsx`. Die frühere Lovable-Standardanleitung war kein
+Die maßgeblichen Quellen sind `src/App.tsx` und `src/lib/checkin-config.ts`. Rechtstexte im
+Aurora-Weg (seit 28.09.2026, aurora-v2 Welle ra-w4): Impressum und Datenschutz des Betriebs liegen
+zentral auf `mein.auroraverse.de/<betrieb>/impressum` bzw. `/datenschutz`; die Konfiguration
+liefert die Adressen im Feld `rechtsseiten`, der Check-in zeigt sie als Fußzeile
+(`src/components/RechtsFusszeile.tsx`) und leitet `/:tenant/datenschutz` dorthin weiter.
+`src/pages/Privacy.tsx` gilt nur noch für den AKZ-Bestand. Die frühere Lovable-Standardanleitung war kein
 gültiger Projekteinstieg und wurde beim Dokumentationsaudit entfernt.
 
 ## Lokal prüfen

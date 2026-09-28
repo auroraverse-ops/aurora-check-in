@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Privacy from "./pages/Privacy";
+import Datenschutz from "./pages/Datenschutz";
 import NotFound from "./pages/NotFound";
 import CheckinPage from "./pages/CheckinPage";
 import { isLegacyMode } from "./lib/checkin-config";
@@ -23,8 +24,11 @@ const App = () => (
 
           {/* Aurora Starter: Tenant + optionale Filiale aus URL */}
           <Route path="/:tenant" element={<CheckinPage />} />
+          {/* ph-w0 PH0-02: Datenschutzhinweise des Mandanten aus der DB (statisches Segment vor :filiale) */}
+          <Route path="/:tenant/datenschutz" element={<Datenschutz />} />
           <Route path="/:tenant/:filiale" element={<CheckinPage />} />
 
+          {/* Nur AKZ-Bestandsmodus (fester Text, RR-31). Aurora-Mandanten: /:tenant/datenschutz */}
           <Route path="/privacy" element={<Privacy />} />
 
           {/* Fallback: Ohne Tenant → Fehlerseite oder Legacy */}

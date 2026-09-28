@@ -20,6 +20,7 @@
       "/",
       "/:tenant",
       "/:tenant/:filiale",
+      "/:tenant/datenschutz",
       "/privacy"
     ],
     "environment_interfaces": [
@@ -56,21 +57,9 @@
       "consent_hash_unavailable_sentinel",
       "idempotency_request_id",
       "legacy_direct_webhook_interface",
-      "runtime_submit_url_contract",
-      "sha256_consent_or_integrity"
+      "runtime_submit_url_contract"
     ],
-    "consent_contracts": [
-      {
-        "key": "datenschutz",
-        "version": "v1",
-        "text_sha256": "655765b63dcf52d94d56c5147755803e26697507b61c8306dec0be7de2ae6d34"
-      },
-      {
-        "key": "recall",
-        "version": "v1",
-        "text_sha256": "a1817cfc590d9bfbc1098484ccaada955c5e916684983a2a926eb354d0d39b11"
-      }
-    ]
+    "consent_contracts": []
   },
   "release_requirements": {
     "clean_repository_required": true,
