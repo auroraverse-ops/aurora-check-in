@@ -88,6 +88,22 @@ export interface CheckinConfig {
    * das Tablet auf dem v2-Pfad.
    */
   consent?: ConsentConfig
+  /**
+   * ra-w4 (aurora-v2 Plan 2026-09-27): Adressen der zentralen Rechtsseiten des
+   * Betriebs. Optional, aeltere Backend-Versionen liefern das Feld nicht; null,
+   * wenn der Server keine gueltigen Adressen bilden kann.
+   */
+  rechtsseiten?: Rechtsseiten | null
+}
+
+export interface Rechtsseiten {
+  impressum_url: string
+  datenschutz_url: string
+  /**
+   * Nur false, wenn die Sperre (Stufe S3) an ist UND der Betrieb sein Impressum
+   * nicht bestaetigt hat. Entschieden wird auf dem Server, nicht hier.
+   */
+  impressum_gueltig: boolean
 }
 
 // Config-API-URL — Default Testserver, überschreibbar per Env

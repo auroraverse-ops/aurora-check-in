@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { fetchCheckinConfig, submitCheckin, type CheckinConfig } from "@/lib/checkin-config";
 import CheckInFormDynamic from "@/components/CheckInFormDynamic";
 import { CONSENT_VERALTET_HINWEIS, istWortlautVeraltet, zeigeWartemeldung } from "@/lib/consent-v3";
+import { zeigeRechtsSperre } from "@/lib/rechtsseiten";
+import RechtsFusszeile from "@/components/RechtsFusszeile";
 
 // Aurora-Defaults (Migration 173 in aurora-v2): Neon-Gruen.
 const DEFAULT_BRAND_H = 130;
@@ -197,11 +199,14 @@ const CheckinPage = () => {
     );
   }
 
+  // ra-w4, Stufe S3: Sperre an und Impressum des Betriebs nicht bestaetigt.
+  // Gleiche Meldung wie die Wartemeldung - der Kunde braucht keinen Grund,
+  // der Betrieb sieht die fehlenden Angaben im Admin.
   // Fail-closed (Spec S4/S5): der Mandant steht auf v3, aber ein Pflichttext ist
   // nicht freigegeben. Dann zeigt das Tablet KEINEN improvisierten Ersatztext,
   // sondern eine Wartemeldung — der Betrieb arbeitet bis zur Freigabe wie vor
   // dem Tablet (Arbeitsanweisung T9).
-  if (config && zeigeWartemeldung(config.consent)) {
+  if (config && (zeigeRechtsSperre(config) || zeigeWartemeldung(config.consent))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black px-6">
         <div className="text-center space-y-4 max-w-md">
@@ -215,6 +220,7 @@ const CheckinPage = () => {
           >
             Erneut versuchen
           </button>
+          <RechtsFusszeile config={config} />
         </div>
       </div>
     );
@@ -309,6 +315,7 @@ const CheckinPage = () => {
           onSubmit={handleSubmit}
         />
 
+        <RechtsFusszeile config={config} />
         <div className="h-12" />
       </div>
     </div>

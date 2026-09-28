@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { fetchCheckinConfig } from "@/lib/checkin-config";
+import { rechtsLinks } from "@/lib/rechtsseiten";
 
 // ph-w0 PH0-02 (Spec aurora-v2 portal-hauptkanal/01, 26.09.2026):
 // Datenschutzhinweise DES MANDANTEN aus der Datenbank. Quelle ist dieselbe
@@ -10,9 +11,15 @@ import { fetchCheckinConfig } from "@/lib/checkin-config";
 // sind. Kein fest eingebauter Ersatztext - fehlt die Freigabe, sagt die Seite das.
 // Die feste Seite /privacy bleibt ausschliesslich fuer den AKZ-Bestandsmodus.
 // Ziel auch fuer den Link im Buchungs-Widget (PH0-03).
+//
+// ra-w4 (aurora-v2 Plan 2026-09-27, V4): Liefert checkin-config die Adresse der
+// zentralen Datenschutzseite des Betriebs, leitet diese Route dorthin weiter
+// (eine Darstellung statt zwei). Die Darstellung unten bleibt nur als Rueckfall
+// fuer eine Edge ohne das Feld `rechtsseiten`.
 
 type Zustand =
   | { art: "laedt" }
+  | { art: "weiter" }
   | { art: "text"; betrieb: string; wortlaut: string }
   | { art: "nicht_freigegeben"; betrieb: string }
   | { art: "fehler" };
@@ -30,6 +37,12 @@ const Datenschutz = () => {
     fetchCheckinConfig(tenant)
       .then((config) => {
         if (abgebrochen) return;
+        const links = rechtsLinks(config);
+        if (links) {
+          setZustand({ art: "weiter" });
+          window.location.replace(links.datenschutz);
+          return;
+        }
         const hinweise = config.consent?.datenschutzhinweise;
         setZustand(
           hinweise?.wortlaut
@@ -59,7 +72,9 @@ const Datenschutz = () => {
         )}
 
         <div className="glass-card p-8 md:p-12">
-          {zustand.art === "laedt" && <p className="text-white/70">Datenschutzhinweise werden geladen …</p>}
+          {(zustand.art === "laedt" || zustand.art === "weiter") && (
+            <p className="text-white/70">Datenschutzhinweise werden geladen …</p>
+          )}
 
           {zustand.art === "text" && (
             <>
