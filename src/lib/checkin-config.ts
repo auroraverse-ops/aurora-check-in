@@ -147,7 +147,10 @@ export async function submitCheckin(
   submitUrl: string,
   submitToken: string,
   data: Record<string, unknown>
-): Promise<{ kunde_id: string; checkin_id: string; is_new_customer: boolean }> {
+): Promise<{ ok: true }> {
+  // Seit sec-w3 (Aurora, 29.09.2026) antwortet checkin-submit fuer Neu- und Bestandskunden
+  // identisch mit { ok: true } - ohne Kennungen, damit die oeffentliche Seite nicht verraet,
+  // ob jemand Kunde des Betriebs ist. Die App wertete die Felder nie aus.
   // safeRandomUUID statt crypto.randomUUID(): letzteres crasht auf iOS Safari <15.4
   // bzw. im Non-Secure-Context (HTTP-Messe-Tablet). request_id dient nur der
   // Idempotenz — kein Sicherheitswert, Fallbacks daher unbedenklich.
