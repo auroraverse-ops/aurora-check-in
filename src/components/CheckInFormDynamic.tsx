@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import GlassInput from "./GlassInput";
+import GeburtsdatumFelder from "./GeburtsdatumFelder";
 import SehhilfeCard from "./SehhilfeCard";
 import AuroraCheckbox from "./AuroraCheckbox";
 import ChipSelector from "./ChipSelector";
@@ -8,6 +9,7 @@ import BildschirmzeitSlider from "./BildschirmzeitSlider";
 import { z } from "zod";
 import type { CheckinConfig } from "@/lib/checkin-config";
 import { calculateAge } from "@/lib/age";
+import { autofillErlaubt, autofillKennung } from "@/lib/eingabe-geraet";
 import ConsentBlockV3 from "./ConsentBlockV3";
 import {
   LEERE_AUSWAHL,
@@ -54,7 +56,8 @@ const checkInSchema = z.object({
   }),
   vorname: z.string().trim().min(1, "Vorname ist erforderlich").max(50),
   nachname: z.string().trim().min(1, "Nachname ist erforderlich").max(50),
-  geburtsdatum: z.string().min(1, "Geburtsdatum ist erforderlich"),
+  // CHECKIN-PRAXIS-1001 Punkt 4: GeburtsdatumFelder liefert nur ein vollständiges, gültiges Datum, sonst ''.
+  geburtsdatum: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Bitte das Geburtsdatum vollständig eingeben (TT.MM.JJJJ)"),
   handy: z.string().trim().min(1, "Handynummer ist erforderlich").max(20),
   // F-06 (2026-05-30): email ist nur Pflicht wenn email_nicht_vorhanden = false.
   // Reine Laenge/Format-Pruefung hier, die bedingte Pflicht via superRefine unten.
@@ -93,6 +96,8 @@ const AKUSTIK_AB_ALTER = 50;
 
 const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
   const { toast } = useToast();
+  // CHECKIN-PRAXIS-1001 Punkt 5: Vorschläge des Browsers nur auf dem eigenen Handy (Link mit ?geraet=handy).
+  const [autofill] = useState(() => autofillErlaubt(window.location.search));
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -329,27 +334,33 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
       <div className="grid grid-cols-2 gap-5">
         <GlassInput
           id="vorname" label="Vorname" placeholder="Max"
+          autoComplete={autofillKennung(autofill, "given-name")}
+          name={autofill ? "given-name" : undefined}
           value={formData.vorname}
           onChange={(e) => handleInputChange("vorname", e.target.value)}
           required
         />
         <GlassInput
           id="nachname" label="Nachname" placeholder="Mustermann"
+          autoComplete={autofillKennung(autofill, "family-name")}
+          name={autofill ? "family-name" : undefined}
           value={formData.nachname}
           onChange={(e) => handleInputChange("nachname", e.target.value)}
           required
         />
       </div>
 
-      <GlassInput
-        id="geburtsdatum" label="Geburtsdatum" type="date"
+      <GeburtsdatumFelder
         value={formData.geburtsdatum}
-        onChange={(e) => handleInputChange("geburtsdatum", e.target.value)}
+        onChange={(iso) => handleInputChange("geburtsdatum", iso)}
+        autofill={autofill}
         required
       />
 
       <GlassInput
         id="handy" label="Handy" type="tel" placeholder="+49 170 1234567"
+        autoComplete={autofillKennung(autofill, "tel")}
+        name={autofill ? "tel" : undefined}
         value={formData.handy}
         onChange={(e) => handleInputChange("handy", e.target.value)}
         required
@@ -362,6 +373,8 @@ const CheckInFormDynamic = ({ config, onSubmit }: Props) => {
       <div className="space-y-3">
         <GlassInput
           id="email" label="E-Mail" type="email"
+          autoComplete={autofillKennung(autofill, "email")}
+          name={autofill ? "email" : undefined}
           placeholder={formData.email_nicht_vorhanden ? "— Keine E-Mail vorhanden —" : "max@beispiel.de"}
           value={formData.email}
           onChange={(e) => handleInputChange("email", e.target.value)}
