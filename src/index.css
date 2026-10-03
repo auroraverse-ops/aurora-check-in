@@ -181,6 +181,27 @@
      color: rgba(255, 255, 255, 0.4);
    }
 
+   /* Auto-Ausfüllen des Browsers (CHECKIN-PRAXIS-1001 Punkt 3): Der Browser legt einen hellen Hintergrund unter die
+      weiße Schrift, die E-Mail-Adresse war nicht mehr lesbar. Dunkler Innenschatten in der Seitenfarbe statt der
+      Browserfarbe, Schrift bleibt weiß. Zwei getrennte Regeln: kennt ein Browser eine der beiden Schreibweisen
+      nicht, verwirft er sonst die ganze Regel. */
+   .glass-input-field:-webkit-autofill,
+   .glass-input-field:-webkit-autofill:hover,
+   .glass-input-field:-webkit-autofill:focus {
+     -webkit-text-fill-color: white;
+     caret-color: white;
+     -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+     box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+     transition: background-color 600000s 0s;
+   }
+
+   .glass-input-field:autofill {
+     -webkit-text-fill-color: white;
+     caret-color: white;
+     box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+     transition: background-color 600000s 0s;
+   }
+
    /* iOS Date Input - Extra Height */
    .glass-input-field[type="date"] {
      min-height: 54px;
